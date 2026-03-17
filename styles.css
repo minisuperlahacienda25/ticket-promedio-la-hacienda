@@ -235,10 +235,18 @@ h1 {
 
 .filter-bar {
   margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  align-items: end;
 }
 
 .filter-bar .field {
-  max-width: 280px;
+  max-width: 100%;
+}
+
+.filter-action button {
+  width: 100%;
 }
 
 .field label,

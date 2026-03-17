@@ -40,6 +40,10 @@ const borrarRegistrosBtn = document.getElementById("borrar-registros");
 const exportarCsvBtn = document.getElementById("exportar-csv");
 const generarPdfBtn = document.getElementById("generar-pdf");
 const filtroEmpleada = document.getElementById("filtro-empleada");
+const filtroFechaInicio = document.getElementById("filtro-fecha-inicio");
+const filtroFechaFin = document.getElementById("filtro-fecha-fin");
+const ordenRegistros = document.getElementById("orden-registros");
+const limpiarFiltrosBtn = document.getElementById("limpiar-filtros");
 const analisisEmpleadas = document.getElementById("analisis-empleadas");
 const modoAviso = document.getElementById("modo-aviso");
 const authOverlay = document.getElementById("auth-overlay");
@@ -73,10 +77,8 @@ function registrarEventos() {
     input.addEventListener("input", actualizarCalculados);
   });
 
-  filtroEmpleada.addEventListener("change", () => {
-    renderizarRegistros();
-    renderizarResumen();
-    renderizarAnalisisEmpleadas();
+  [filtroEmpleada, filtroFechaInicio, filtroFechaFin, ordenRegistros].forEach((control) => {
+    control.addEventListener("change", refrescarVista);
   });
 
   form.addEventListener("submit", manejarEnvioFormulario);
@@ -87,6 +89,7 @@ function registrarEventos() {
   generarPdfBtn.addEventListener("click", generarPdf);
   loginForm.addEventListener("submit", manejarLogin);
   cerrarSesionBtn.addEventListener("click", manejarCerrarSesion);
+  limpiarFiltrosBtn.addEventListener("click", limpiarFiltros);
 }
 
 async function inicializarDatos() {
@@ -307,7 +310,7 @@ function actualizarCalculados() {
 }
 
 function renderizarRegistros() {
-  const registrosFiltrados = obtenerRegistrosFiltrados();
+  const registrosFiltrados = obtenerRegistrosVisibles();
 
   if (!registrosFiltrados.length) {
     tablaRegistros.innerHTML = `
@@ -346,7 +349,7 @@ function renderizarRegistros() {
 }
 
 function renderizarResumen() {
-  const registrosFiltrados = obtenerRegistrosFiltrados();
+  const registrosFiltrados = obtenerRegistrosVisibles();
   const analisis = obtenerAnalisisResumen(registrosFiltrados);
 
   totalTurnos.textContent = String(analisis.turnos);
@@ -356,10 +359,11 @@ function renderizarResumen() {
 
 function renderizarAnalisisEmpleadas() {
   const personas = filtroEmpleada.value === "TODAS" ? EMPLEADAS : [filtroEmpleada.value];
+  const registrosBase = obtenerRegistrosVisibles(false);
 
   analisisEmpleadas.innerHTML = personas
     .map((empleada) => {
-      const datos = registros.filter((registro) => registro.turno === empleada);
+      const datos = registrosBase.filter((registro) => registro.turno === empleada);
       const turnos = datos.length;
       const venta = datos.reduce((acumulado, registro) => acumulado + registro.ventaTurno, 0);
       const tickets = datos.reduce((acumulado, registro) => acumulado + registro.numeroTickets, 0);
@@ -456,7 +460,7 @@ async function borrarHistorial() {
 }
 
 function exportarCsv() {
-  const registrosFiltrados = obtenerRegistrosFiltrados();
+  const registrosFiltrados = obtenerRegistrosVisibles();
   if (!registrosFiltrados.length) {
     alert("No hay registros para exportar.");
     return;
@@ -498,14 +502,14 @@ function exportarCsv() {
 }
 
 function generarPdf() {
-  const registrosFiltrados = obtenerRegistrosFiltrados();
+  const registrosFiltrados = obtenerRegistrosVisibles();
   if (!registrosFiltrados.length) {
     alert("No hay registros para generar el PDF.");
     return;
   }
 
   const analisis = obtenerAnalisisResumen(registrosFiltrados);
-  const tituloFiltro = filtroEmpleada.value === "TODAS" ? "Todas las empleadas" : filtroEmpleada.value;
+  const tituloFiltro = construirResumenFiltros();
 
   const filasHtml = registrosFiltrados
     .map((registro) => {
@@ -587,11 +591,76 @@ function generarPdf() {
   ventana.document.close();
 }
 
-function obtenerRegistrosFiltrados() {
-  if (filtroEmpleada.value === "TODAS") {
-    return registros;
+function obtenerRegistrosVisibles(aplicarOrden = true) {
+  let resultado = [...registros];
+
+  if (filtroEmpleada.value !== "TODAS") {
+    resultado = resultado.filter((registro) => registro.turno === filtroEmpleada.value);
   }
-  return registros.filter((registro) => registro.turno === filtroEmpleada.value);
+
+  if (filtroFechaInicio.value) {
+    resultado = resultado.filter((registro) => registro.fecha >= filtroFechaInicio.value);
+  }
+
+  if (filtroFechaFin.value) {
+    resultado = resultado.filter((registro) => registro.fecha <= filtroFechaFin.value);
+  }
+
+  if (!aplicarOrden) {
+    return resultado;
+  }
+
+  return resultado.sort((a, b) => compararRegistros(a, b, ordenRegistros.value));
+}
+
+function compararRegistros(a, b, criterio) {
+  switch (criterio) {
+    case "fecha-asc":
+      return a.fecha.localeCompare(b.fecha);
+    case "ticket-desc":
+      return b.promedioTicket - a.promedioTicket || b.fecha.localeCompare(a.fecha);
+    case "ticket-asc":
+      return a.promedioTicket - b.promedioTicket || b.fecha.localeCompare(a.fecha);
+    case "venta-desc":
+      return b.ventaTurno - a.ventaTurno || b.fecha.localeCompare(a.fecha);
+    case "venta-asc":
+      return a.ventaTurno - b.ventaTurno || b.fecha.localeCompare(a.fecha);
+    case "fecha-desc":
+    default:
+      return b.fecha.localeCompare(a.fecha);
+  }
+}
+
+function limpiarFiltros() {
+  filtroEmpleada.value = "TODAS";
+  filtroFechaInicio.value = "";
+  filtroFechaFin.value = "";
+  ordenRegistros.value = "fecha-desc";
+  refrescarVista();
+}
+
+function construirResumenFiltros() {
+  const partes = [];
+
+  partes.push(filtroEmpleada.value === "TODAS" ? "Todas las empleadas" : filtroEmpleada.value);
+
+  if (filtroFechaInicio.value || filtroFechaFin.value) {
+    const inicio = filtroFechaInicio.value || "sin inicio";
+    const fin = filtroFechaFin.value || "sin fin";
+    partes.push(`Fechas: ${inicio} a ${fin}`);
+  }
+
+  const etiquetasOrden = {
+    "fecha-desc": "Fecha mas reciente",
+    "fecha-asc": "Fecha mas antigua",
+    "ticket-desc": "Ticket promedio mas alto",
+    "ticket-asc": "Ticket promedio mas bajo",
+    "venta-desc": "Venta mas alta",
+    "venta-asc": "Venta mas baja",
+  };
+  partes.push(`Orden: ${etiquetasOrden[ordenRegistros.value]}`);
+
+  return partes.join(" | ");
 }
 
 function obtenerChecklist() {

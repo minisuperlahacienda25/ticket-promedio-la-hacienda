@@ -217,6 +217,29 @@
             <option value="VALERIA">VALERIA</option>
           </select>
         </div>
+        <div class="field">
+          <label for="filtro-fecha-inicio">Fecha inicial</label>
+          <input id="filtro-fecha-inicio" name="filtroFechaInicio" type="date">
+        </div>
+        <div class="field">
+          <label for="filtro-fecha-fin">Fecha final</label>
+          <input id="filtro-fecha-fin" name="filtroFechaFin" type="date">
+        </div>
+        <div class="field">
+          <label for="orden-registros">Ordenar por</label>
+          <select id="orden-registros" name="ordenRegistros">
+            <option value="fecha-desc">Fecha mas reciente</option>
+            <option value="fecha-asc">Fecha mas antigua</option>
+            <option value="ticket-desc">Ticket promedio mas alto</option>
+            <option value="ticket-asc">Ticket promedio mas bajo</option>
+            <option value="venta-desc">Venta mas alta</option>
+            <option value="venta-asc">Venta mas baja</option>
+          </select>
+        </div>
+        <div class="field filter-action">
+          <label>&nbsp;</label>
+          <button type="button" id="limpiar-filtros" class="secondary">Limpiar filtros</button>
+        </div>
       </div>
 
       <div id="analisis-empleadas" class="employee-grid"></div>
