@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Ticket Promedio</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div class="hero-header">
+        <img src="logo.png.png" alt="Logo Minisuper La Hacienda" class="hero-logo">
+        <div>
+          <p class="eyebrow">MINISUPER LA HACIENDA</p>
+          <h1>Control de ventas por turno</h1>
+          <p class="subtitle">
+            Registra el efectivo inicial, la venta y los tickets de cada turno para obtener
+            el total calculado y el ticket promedio al instante.
+          </p>
+        </div>
+      </div>
+      <div id="modo-aviso" class="mode-banner">
+        Modo local activo. Para compartir y editar desde cualquier dispositivo, conecta Firebase y publica la pagina.
+      </div>
+    </section>
+
+    <section class="panel">
+      <form id="turno-form" class="form-grid">
+        <div class="field">
+          <label for="turno">Turno</label>
+          <select id="turno" name="turno" required>
+            <option value="NITZIA">NITZIA</option>
+            <option value="PAOLA">PAOLA</option>
+            <option value="VALERIA">VALERIA</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="fecha">Fecha</label>
+          <input id="fecha" name="fecha" type="date" required>
+        </div>
+
+        <div class="field">
+          <label for="efectivoInicial">Efectivo inicial en caja</label>
+          <input id="efectivoInicial" name="efectivoInicial" type="number" min="0" step="0.01" placeholder="0.00" required>
+        </div>
+
+        <div class="field">
+          <label for="ventaTurno">Venta por turno</label>
+          <input id="ventaTurno" name="ventaTurno" type="number" min="0" step="0.01" placeholder="0.00" required>
+        </div>
+
+        <div class="field">
+          <label for="numeroTickets">Numero de tickets</label>
+          <input id="numeroTickets" name="numeroTickets" type="number" min="1" step="1" placeholder="0" required>
+        </div>
+
+        <div class="field readonly">
+          <label for="totalCalculado">Total calculado</label>
+          <input id="totalCalculado" name="totalCalculado" type="text" readonly value="$0.00">
+        </div>
+
+        <div class="field readonly">
+          <label for="promedioTicket">Promedio del ticket</label>
+          <input id="promedioTicket" name="promedioTicket" type="text" readonly value="$0.00">
+        </div>
+
+        <div class="form-section span-full">
+          <h2>Checklist del turno</h2>
+          <div class="checklist-grid">
+            <label class="check-item">
+              <input type="checkbox" id="check-caja-limpia" name="checkCajaLimpia">
+              <span>Caja ordenada y limpia</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" id="check-impulso" name="checkImpulso">
+              <span>Productos impulso acomodados</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" id="check-precios" name="checkPrecios">
+              <span>Precios visibles</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" id="check-reporte-ventas" name="checkReporteVentas">
+              <span>Reporte ventas del turno</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" id="check-merma-reportada" name="checkMermaReportada">
+              <span>Reporte cualquier diferencia o merma</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section span-full">
+          <h2>Top 5 de productos mas vendidos</h2>
+          <div class="subgrid">
+            <div class="field">
+              <label for="topVenta1">Producto 1</label>
+              <input id="topVenta1" name="topVenta1" type="text" placeholder="Ej. Refresco 600 ml">
+            </div>
+            <div class="field">
+              <label for="topVenta2">Producto 2</label>
+              <input id="topVenta2" name="topVenta2" type="text">
+            </div>
+            <div class="field">
+              <label for="topVenta3">Producto 3</label>
+              <input id="topVenta3" name="topVenta3" type="text">
+            </div>
+            <div class="field">
+              <label for="topVenta4">Producto 4</label>
+              <input id="topVenta4" name="topVenta4" type="text">
+            </div>
+            <div class="field">
+              <label for="topVenta5">Producto 5</label>
+              <input id="topVenta5" name="topVenta5" type="text">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section span-full">
+          <h2>Top 3 de productos de baja rotacion</h2>
+          <div class="subgrid">
+            <div class="field">
+              <label for="bajaRotacion1">Producto 1</label>
+              <input id="bajaRotacion1" name="bajaRotacion1" type="text">
+            </div>
+            <div class="field">
+              <label for="bajaRotacion2">Producto 2</label>
+              <input id="bajaRotacion2" name="bajaRotacion2" type="text">
+            </div>
+            <div class="field">
+              <label for="bajaRotacion3">Producto 3</label>
+              <input id="bajaRotacion3" name="bajaRotacion3" type="text">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section span-full">
+          <h2>Registro de merma</h2>
+          <div class="subgrid">
+            <div class="field">
+              <label for="mermaProducto">Producto con merma</label>
+              <input id="mermaProducto" name="mermaProducto" type="text" placeholder="Dejar vacio si no hubo merma">
+            </div>
+            <div class="field">
+              <label for="mermaCantidad">Cantidad</label>
+              <input id="mermaCantidad" name="mermaCantidad" type="number" min="0" step="1" placeholder="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit">Guardar turno</button>
+          <button type="button" id="cancelar-edicion" class="secondary hidden">Cancelar edicion</button>
+          <button type="button" id="limpiar-form" class="secondary">Limpiar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="summary-grid">
+      <article class="card">
+        <p class="card-label">Turnos registrados</p>
+        <p id="total-turnos" class="card-value">0</p>
+      </article>
+      <article class="card">
+        <p class="card-label">Venta acumulada</p>
+        <p id="venta-acumulada" class="card-value">$0.00</p>
+      </article>
+      <article class="card">
+        <p class="card-label">Promedio global</p>
+        <p id="promedio-global" class="card-value">$0.00</p>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Analisis por empleada</h2>
+          <p>Filtra la informacion para revisar cuanto genera cada persona.</p>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="field">
+          <label for="filtro-empleada">Ver informacion de</label>
+          <select id="filtro-empleada" name="filtro-empleada">
+            <option value="TODAS">Todas</option>
+            <option value="NITZIA">NITZIA</option>
+            <option value="PAOLA">PAOLA</option>
+            <option value="VALERIA">VALERIA</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="analisis-empleadas" class="employee-grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Historial de turnos</h2>
+          <p>Los datos se guardan en este navegador.</p>
+        </div>
+        <div class="header-actions">
+          <button type="button" id="exportar-csv" class="secondary">Exportar CSV</button>
+          <button type="button" id="generar-pdf" class="secondary">Generar PDF</button>
+          <button type="button" id="borrar-registros" class="danger">Borrar historial</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Turno</th>
+              <th>Efectivo inicial</th>
+              <th>Venta</th>
+              <th>Tickets</th>
+              <th>Total calculado</th>
+              <th>Ticket promedio</th>
+              <th>Detalle operativo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-registros">
+            <tr class="empty-row">
+              <td colspan="9">Aun no hay registros guardados.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="firebase-config.js"></script>
+  <script type="module" src="script.js"></script>
+</body>
+</html>
