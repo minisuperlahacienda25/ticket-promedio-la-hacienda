@@ -11,6 +11,14 @@ import {
   serverTimestamp,
   updateDoc,
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
+  signInWithEmailAndPassword,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 
 const STORAGE_KEY = "minisuper-turnos";
 const COLLECTION_NAME = "minisuper_turnos";
@@ -34,6 +42,11 @@ const generarPdfBtn = document.getElementById("generar-pdf");
 const filtroEmpleada = document.getElementById("filtro-empleada");
 const analisisEmpleadas = document.getElementById("analisis-empleadas");
 const modoAviso = document.getElementById("modo-aviso");
+const authOverlay = document.getElementById("auth-overlay");
+const loginForm = document.getElementById("login-form");
+const loginError = document.getElementById("login-error");
+const sessionUser = document.getElementById("session-user");
+const cerrarSesionBtn = document.getElementById("cerrar-sesion");
 const topVentasIds = ["topVenta1", "topVenta2", "topVenta3", "topVenta4", "topVenta5"];
 const bajaRotacionIds = ["bajaRotacion1", "bajaRotacion2", "bajaRotacion3"];
 const mermaProductoInput = document.getElementById("mermaProducto");
@@ -45,12 +58,15 @@ let registros = [];
 let modoDatos = "local";
 let editingId = null;
 let db = null;
+let auth = null;
 let unsubscribeTurnos = null;
+let currentUser = null;
 
 fechaInput.value = obtenerFechaHoy();
 actualizarCalculados();
 registrarEventos();
 inicializarDatos();
+document.body.classList.add("locked");
 
 function registrarEventos() {
   [efectivoInicialInput, ventaTurnoInput, numeroTicketsInput].forEach((input) => {
@@ -69,6 +85,8 @@ function registrarEventos() {
   borrarRegistrosBtn.addEventListener("click", borrarHistorial);
   exportarCsvBtn.addEventListener("click", exportarCsv);
   generarPdfBtn.addEventListener("click", generarPdf);
+  loginForm.addEventListener("submit", manejarLogin);
+  cerrarSesionBtn.addEventListener("click", manejarCerrarSesion);
 }
 
 async function inicializarDatos() {
@@ -83,9 +101,11 @@ async function inicializarDatos() {
     try {
       const app = initializeApp(config.firebaseConfig);
       db = getFirestore(app);
+      auth = getAuth(app);
       modoDatos = "compartido";
       modoAviso.textContent = "Modo compartido activo. Los cambios se sincronizan entre dispositivos que usen este link.";
-      escucharTurnosCompartidos();
+      await setPersistence(auth, browserLocalPersistence);
+      vigilarSesion();
       return;
     } catch (error) {
       console.error(error);
@@ -96,10 +116,70 @@ async function inicializarDatos() {
   }
 
   registros = cargarRegistrosLocales();
+  ocultarPantallaAcceso();
+  sessionUser.textContent = "Modo local sin inicio de sesion.";
   refrescarVista();
 }
 
+function vigilarSesion() {
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+
+    if (!user) {
+      mostrarPantallaAcceso();
+      sessionUser.textContent = "No has iniciado sesion.";
+      cerrarSesionBtn.classList.add("hidden");
+      if (unsubscribeTurnos) {
+        unsubscribeTurnos();
+        unsubscribeTurnos = null;
+      }
+      registros = [];
+      refrescarVista();
+      return;
+    }
+
+    ocultarPantallaAcceso();
+    sessionUser.textContent = `Sesion: ${user.email}`;
+    cerrarSesionBtn.classList.remove("hidden");
+    escucharTurnosCompartidos();
+  });
+}
+
+async function manejarLogin(event) {
+  event.preventDefault();
+
+  if (!auth) {
+    return;
+  }
+
+  const email = loginForm.loginEmail.value.trim();
+  const password = loginForm.loginPassword.value;
+
+  loginError.classList.add("hidden");
+  loginError.textContent = "";
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    loginForm.reset();
+  } catch (error) {
+    console.error(error);
+    loginError.textContent = "No se pudo iniciar sesion. Revisa el correo y la contrasena.";
+    loginError.classList.remove("hidden");
+  }
+}
+
+async function manejarCerrarSesion() {
+  if (!auth) {
+    return;
+  }
+
+  await signOut(auth);
+}
+
 function escucharTurnosCompartidos() {
+  if (unsubscribeTurnos) {
+    unsubscribeTurnos();
+  }
   const consulta = query(collection(db, COLLECTION_NAME), orderBy("createdAt", "desc"));
   unsubscribeTurnos = onSnapshot(
     consulta,
@@ -578,6 +658,16 @@ function refrescarVista() {
   renderizarRegistros();
   renderizarResumen();
   renderizarAnalisisEmpleadas();
+}
+
+function mostrarPantallaAcceso() {
+  authOverlay.classList.remove("hidden");
+  document.body.classList.add("locked");
+}
+
+function ocultarPantallaAcceso() {
+  authOverlay.classList.add("hidden");
+  document.body.classList.remove("locked");
 }
 
 function actualizarAvisoModo() {

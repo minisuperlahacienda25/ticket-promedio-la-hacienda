@@ -7,6 +7,26 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div id="auth-overlay" class="auth-overlay">
+    <section class="auth-card">
+      <img src="logo.png.png" alt="Logo Minisuper La Hacienda" class="auth-logo">
+      <h1 class="auth-title">Acceso al sistema</h1>
+      <p class="auth-text">Solo personal autorizado puede entrar al control de ventas.</p>
+      <form id="login-form" class="auth-form">
+        <div class="field">
+          <label for="login-email">Correo</label>
+          <input id="login-email" name="loginEmail" type="email" placeholder="empleada@negocio.com" required>
+        </div>
+        <div class="field">
+          <label for="login-password">Contrasena</label>
+          <input id="login-password" name="loginPassword" type="password" placeholder="Tu contrasena" required>
+        </div>
+        <button type="submit">Entrar</button>
+        <p id="login-error" class="auth-error hidden"></p>
+      </form>
+    </section>
+  </div>
+
   <main class="app">
     <section class="hero">
       <div class="hero-header">
@@ -20,8 +40,14 @@
           </p>
         </div>
       </div>
-      <div id="modo-aviso" class="mode-banner">
-        Modo local activo. Para compartir y editar desde cualquier dispositivo, conecta Firebase y publica la pagina.
+      <div class="hero-tools">
+        <div id="modo-aviso" class="mode-banner">
+          Modo local activo. Para compartir y editar desde cualquier dispositivo, conecta Firebase y publica la pagina.
+        </div>
+        <div class="session-box">
+          <p id="session-user" class="session-user">No has iniciado sesion.</p>
+          <button type="button" id="cerrar-sesion" class="secondary hidden">Cerrar sesion</button>
+        </div>
       </div>
     </section>
 
