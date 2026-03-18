@@ -68,6 +68,7 @@ const tablaSugerencias = document.getElementById("tabla-sugerencias");
 const totalSugerencias = document.getElementById("total-sugerencias");
 const productosDistintos = document.getElementById("productos-distintos");
 const productoTop = document.getElementById("producto-top");
+const generarPdfSugerenciasBtn = document.getElementById("generar-pdf-sugerencias");
 const topVentasIds = ["topVenta1", "topVenta2", "topVenta3", "topVenta4", "topVenta5"];
 const bajaRotacionIds = ["bajaRotacion1", "bajaRotacion2", "bajaRotacion3"];
 const mermaProductoInput = document.getElementById("mermaProducto");
@@ -113,6 +114,7 @@ function registrarEventos() {
   limpiarFiltrosBtn.addEventListener("click", limpiarFiltros);
   sugerenciasForm.addEventListener("submit", manejarSugerencia);
   limpiarSugerenciaBtn.addEventListener("click", limpiarFormularioSugerencia);
+  generarPdfSugerenciasBtn.addEventListener("click", generarPdfSugerencias);
   menuToggle.addEventListener("click", toggleMenu);
   menuLinks.forEach((button) => {
     button.addEventListener("click", () => cambiarSeccion(button.dataset.section));
@@ -763,6 +765,86 @@ function generarPdf() {
             <th>Total calculado</th>
             <th>Ticket promedio</th>
             <th>Detalle operativo</th>
+          </tr>
+        </thead>
+        <tbody>${filasHtml}</tbody>
+      </table>
+      <script>window.onload = function () { window.print(); };<\/script>
+    </body>
+    </html>
+  `);
+  ventana.document.close();
+}
+
+function generarPdfSugerencias() {
+  const resumen = obtenerResumenSugerencias();
+
+  if (!resumen.productos.length) {
+    alert("No hay sugerencias para generar el PDF.");
+    return;
+  }
+
+  const filasHtml = resumen.productos
+    .map((item) => {
+      return `
+        <tr>
+          <td>${item.producto}</td>
+          <td>${item.cantidad}</td>
+          <td>${item.ultimaFecha || "-"}</td>
+          <td>${item.ultimaEmpleada || "-"}</td>
+          <td>${item.notas || "-"}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  const ventana = window.open("", "_blank", "width=1100,height=850");
+  if (!ventana) {
+    alert("Tu navegador bloqueo la ventana del reporte. Permite ventanas emergentes e intenta de nuevo.");
+    return;
+  }
+
+  ventana.document.write(`
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <title>Reporte de sugerencias - MINISUPER LA HACIENDA</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 32px; color: #2f241a; }
+        .brand { display: flex; gap: 16px; align-items: center; margin-bottom: 20px; }
+        .brand img { width: 90px; height: 90px; object-fit: contain; }
+        .meta { margin-bottom: 20px; color: #6f5844; }
+        .summary { display: grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .box { border: 1px solid #d7c3aa; border-radius: 10px; padding: 12px; background: #fbf4ea; }
+        .box strong { display: block; margin-bottom: 8px; font-size: 12px; text-transform: uppercase; color: #6f5844; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border: 1px solid #e4d3be; padding: 8px; text-align: left; vertical-align: top; }
+        th { background: #f3e6d5; }
+      </style>
+    </head>
+    <body>
+      <div class="brand">
+        <img src="logo.png.png" alt="Logo">
+        <div>
+          <h1>MINISUPER LA HACIENDA</h1>
+          <p class="meta">Reporte de sugerencias generado el ${formatearFechaHoraActual()}</p>
+        </div>
+      </div>
+      <div class="summary">
+        <div class="box"><strong>Sugerencias registradas</strong>${resumen.totalSolicitudes}</div>
+        <div class="box"><strong>Productos distintos</strong>${resumen.productos.length}</div>
+        <div class="box"><strong>Producto mas pedido</strong>${resumen.productoTop || "Sin datos"}</div>
+      </div>
+      <h2>Resumen agrupado de sugerencias</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Veces solicitado</th>
+            <th>Ultima fecha</th>
+            <th>Ultimo registro</th>
+            <th>Notas recientes</th>
           </tr>
         </thead>
         <tbody>${filasHtml}</tbody>
