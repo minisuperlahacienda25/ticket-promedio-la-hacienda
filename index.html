@@ -30,7 +30,15 @@
   <main class="app">
     <section class="hero">
       <div class="hero-header">
-        <img src="logo.png.png" alt="Logo Minisuper La Hacienda" class="hero-logo">
+        <div class="brand-menu-wrap">
+          <button type="button" id="menu-toggle" class="logo-button" aria-expanded="false" aria-controls="app-menu">
+            <img src="logo.png.png" alt="Logo Minisuper La Hacienda" class="hero-logo">
+          </button>
+          <div id="app-menu" class="app-menu hidden">
+            <button type="button" class="menu-link active" data-section="tickets">Registros de ticket promedio</button>
+            <button type="button" class="menu-link" data-section="sugerencias">Sugerencias de clientes</button>
+          </div>
+        </div>
         <div>
           <p class="eyebrow">MINISUPER LA HACIENDA</p>
           <h1>Control de ventas por turno</h1>
@@ -51,7 +59,7 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-section="tickets">
       <form id="turno-form" class="form-grid">
         <div class="field">
           <label for="turno">Turno</label>
@@ -184,7 +192,7 @@
       </form>
     </section>
 
-    <section class="summary-grid">
+    <section class="summary-grid" data-section="tickets">
       <article class="card">
         <p class="card-label">Turnos registrados</p>
         <p id="total-turnos" class="card-value">0</p>
@@ -199,7 +207,7 @@
       </article>
     </section>
 
-    <section class="panel">
+    <section class="panel hidden" data-section="sugerencias">
       <div class="panel-header">
         <div>
           <h2>Sugerencias de clientes</h2>
@@ -285,7 +293,7 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-section="tickets">
       <div class="panel-header">
         <div>
           <h2>Analisis por empleada</h2>
@@ -331,7 +339,7 @@
       <div id="analisis-empleadas" class="employee-grid"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-section="tickets">
       <div class="panel-header">
         <div>
           <h2>Historial de turnos</h2>

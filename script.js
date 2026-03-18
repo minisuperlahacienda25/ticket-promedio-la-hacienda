@@ -53,6 +53,10 @@ const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const sessionUser = document.getElementById("session-user");
 const cerrarSesionBtn = document.getElementById("cerrar-sesion");
+const menuToggle = document.getElementById("menu-toggle");
+const appMenu = document.getElementById("app-menu");
+const menuLinks = document.querySelectorAll(".menu-link");
+const sectionPanels = document.querySelectorAll("section[data-section]");
 const sugerenciasForm = document.getElementById("sugerencias-form");
 const sugerenciaFechaInput = document.getElementById("sugerencia-fecha");
 const sugerenciaEmpleadaInput = document.getElementById("sugerencia-empleada");
@@ -80,6 +84,7 @@ let unsubscribeTurnos = null;
 let unsubscribeSugerencias = null;
 let currentUser = null;
 let sugerencias = [];
+let currentSection = "tickets";
 
 fechaInput.value = obtenerFechaHoy();
 sugerenciaFechaInput.value = obtenerFechaHoy();
@@ -108,6 +113,11 @@ function registrarEventos() {
   limpiarFiltrosBtn.addEventListener("click", limpiarFiltros);
   sugerenciasForm.addEventListener("submit", manejarSugerencia);
   limpiarSugerenciaBtn.addEventListener("click", limpiarFormularioSugerencia);
+  menuToggle.addEventListener("click", toggleMenu);
+  menuLinks.forEach((button) => {
+    button.addEventListener("click", () => cambiarSeccion(button.dataset.section));
+  });
+  document.addEventListener("click", manejarClickFueraMenu);
 }
 
 async function inicializarDatos() {
@@ -202,6 +212,39 @@ async function manejarCerrarSesion() {
   }
 
   await signOut(auth);
+}
+
+function toggleMenu(event) {
+  event.stopPropagation();
+  const abierto = !appMenu.classList.contains("hidden");
+  appMenu.classList.toggle("hidden", abierto);
+  menuToggle.setAttribute("aria-expanded", String(!abierto));
+}
+
+function manejarClickFueraMenu(event) {
+  if (appMenu.classList.contains("hidden")) {
+    return;
+  }
+
+  if (!appMenu.contains(event.target) && !menuToggle.contains(event.target)) {
+    appMenu.classList.add("hidden");
+    menuToggle.setAttribute("aria-expanded", "false");
+  }
+}
+
+function cambiarSeccion(section) {
+  currentSection = section;
+
+  sectionPanels.forEach((panel) => {
+    panel.classList.toggle("hidden", panel.dataset.section !== section);
+  });
+
+  menuLinks.forEach((button) => {
+    button.classList.toggle("active", button.dataset.section === section);
+  });
+
+  appMenu.classList.add("hidden");
+  menuToggle.setAttribute("aria-expanded", "false");
 }
 
 function escucharTurnosCompartidos() {
