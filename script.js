@@ -33,6 +33,8 @@ const fechaInput = document.getElementById("fecha");
 const ventaTurnoInput = document.getElementById("ventaTurno");
 const numeroTicketsInput = document.getElementById("numeroTickets");
 const promedioTicketInput = document.getElementById("promedioTicket");
+const efectivoMananaInput = document.getElementById("efectivoManana");
+const efectivoTardeInput = document.getElementById("efectivoTarde");
 const tablaRegistros = document.getElementById("tabla-registros");
 const totalTurnos = document.getElementById("total-turnos");
 const ventaAcumulada = document.getElementById("venta-acumulada");
@@ -389,6 +391,10 @@ function construirRegistroPayload(ventaTurno, numeroTickets) {
     ventaTurno,
     numeroTickets,
     promedioTicket: ventaTurno / numeroTickets,
+    controlEfectivo: {
+      efectivoManana: leerNumero(efectivoMananaInput.value),
+      efectivoTarde: leerNumero(efectivoTardeInput.value),
+    },
     checklist: obtenerChecklist(),
     topVentas: obtenerListaProductos(topVentasIds),
     bajaRotacion: obtenerListaProductos(bajaRotacionIds),
@@ -443,6 +449,10 @@ function normalizarRegistroRemoto(item) {
     ventaTurno: Number(data.ventaTurno || 0),
     numeroTickets: Number(data.numeroTickets || 0),
     promedioTicket: Number(data.promedioTicket || 0),
+    controlEfectivo: {
+      efectivoManana: Number(data.controlEfectivo?.efectivoManana || 0),
+      efectivoTarde: Number(data.controlEfectivo?.efectivoTarde || 0),
+    },
     checklist: data.checklist || {},
     topVentas: Array.isArray(data.topVentas) ? data.topVentas : [],
     bajaRotacion: Array.isArray(data.bajaRotacion) ? data.bajaRotacion : [],
@@ -698,6 +708,8 @@ function iniciarEdicion(id) {
   ventaTurnoInput.value = registro.ventaTurno;
   numeroTicketsInput.value = registro.numeroTickets;
   promedioTicketInput.value = formatearMoneda(registro.promedioTicket);
+  efectivoMananaInput.value = registro.controlEfectivo?.efectivoManana || "";
+  efectivoTardeInput.value = registro.controlEfectivo?.efectivoTarde || "";
 
   document.getElementById("check-caja-limpia").checked = Boolean(registro.checklist?.cajaLimpia);
   document.getElementById("check-impulso").checked = Boolean(registro.checklist?.impulso);
@@ -1366,6 +1378,7 @@ function rellenarLista(ids, valores) {
 
 function crearResumenOperativo(registro, separador = " | ") {
   const checklist = registro.checklist || {};
+  const controlEfectivo = registro.controlEfectivo || {};
   const topVentas = registro.topVentas?.length ? registro.topVentas.join(", ") : "Sin captura";
   const bajaRotacion = registro.bajaRotacion?.length ? registro.bajaRotacion.join(", ") : "Sin captura";
   const merma = registro.merma?.producto
@@ -1378,6 +1391,8 @@ function crearResumenOperativo(registro, separador = " | ") {
     `Precios visibles: ${checklist.precios ? "Si" : "No"}`,
     `Reporte de ventas: ${checklist.reporteVentas ? "Si" : "No"}`,
     `Diferencia o merma reportada: ${checklist.mermaReportada ? "Si" : "No"}`,
+    `Efectivo que dejas en la manana: ${formatearMoneda(controlEfectivo.efectivoManana || 0)}`,
+    `Efectivo que deja para la tarde: ${formatearMoneda(controlEfectivo.efectivoTarde || 0)}`,
     `Top 5 vendidos: ${topVentas}`,
     `Baja rotacion: ${bajaRotacion}`,
     `Merma: ${merma}`,
