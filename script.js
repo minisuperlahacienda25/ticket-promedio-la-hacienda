@@ -30,7 +30,6 @@ const ACTIVIDADES_COLLECTION_NAME = "minisuper_actividades";
 
 const form = document.getElementById("turno-form");
 const fechaInput = document.getElementById("fecha");
-const efectivoInicialInput = document.getElementById("efectivoInicial");
 const ventaTurnoInput = document.getElementById("ventaTurno");
 const numeroTicketsInput = document.getElementById("numeroTickets");
 const totalCalculadoInput = document.getElementById("totalCalculado");
@@ -123,7 +122,7 @@ inicializarDatos();
 document.body.classList.add("locked");
 
 function registrarEventos() {
-  [efectivoInicialInput, ventaTurnoInput, numeroTicketsInput].forEach((input) => {
+  [ventaTurnoInput, numeroTicketsInput].forEach((input) => {
     input.addEventListener("input", actualizarCalculados);
   });
 
@@ -385,15 +384,12 @@ async function manejarEnvioFormulario(event) {
 }
 
 function construirRegistroPayload(ventaTurno, numeroTickets) {
-  const efectivoInicial = leerNumero(efectivoInicialInput.value);
-
   return {
     fecha: fechaInput.value,
     turno: form.turno.value,
-    efectivoInicial,
     ventaTurno,
     numeroTickets,
-    totalCalculado: efectivoInicial + ventaTurno,
+    totalCalculado: ventaTurno,
     promedioTicket: ventaTurno / numeroTickets,
     checklist: obtenerChecklist(),
     topVentas: obtenerListaProductos(topVentasIds),
@@ -446,10 +442,9 @@ function normalizarRegistroRemoto(item) {
     id: item.id,
     fecha: data.fecha || "",
     turno: data.turno || "",
-    efectivoInicial: Number(data.efectivoInicial || 0),
     ventaTurno: Number(data.ventaTurno || 0),
     numeroTickets: Number(data.numeroTickets || 0),
-    totalCalculado: Number(data.totalCalculado || 0),
+    totalCalculado: Number(data.totalCalculado || data.ventaTurno || 0),
     promedioTicket: Number(data.promedioTicket || 0),
     checklist: data.checklist || {},
     topVentas: Array.isArray(data.topVentas) ? data.topVentas : [],
@@ -486,11 +481,10 @@ function normalizarActividadRemota(item) {
 }
 
 function actualizarCalculados() {
-  const efectivoInicial = leerNumero(efectivoInicialInput.value);
   const ventaTurno = leerNumero(ventaTurnoInput.value);
   const numeroTickets = leerNumero(numeroTicketsInput.value);
 
-  totalCalculadoInput.value = formatearMoneda(efectivoInicial + ventaTurno);
+  totalCalculadoInput.value = formatearMoneda(ventaTurno);
   promedioTicketInput.value = formatearMoneda(numeroTickets > 0 ? ventaTurno / numeroTickets : 0);
 }
 
@@ -500,7 +494,7 @@ function renderizarRegistros() {
   if (!registrosFiltrados.length) {
     tablaRegistros.innerHTML = `
       <tr class="empty-row">
-        <td colspan="9">No hay registros para el filtro seleccionado.</td>
+        <td colspan="8">No hay registros para el filtro seleccionado.</td>
       </tr>
     `;
     return;
@@ -512,7 +506,6 @@ function renderizarRegistros() {
         <tr>
           <td>${registro.fecha}</td>
           <td>${registro.turno}</td>
-          <td>${formatearMoneda(registro.efectivoInicial)}</td>
           <td>${formatearMoneda(registro.ventaTurno)}</td>
           <td>${registro.numeroTickets}</td>
           <td>${formatearMoneda(registro.totalCalculado)}</td>
@@ -710,7 +703,6 @@ function iniciarEdicion(id) {
   editingId = id;
   form.turno.value = registro.turno;
   fechaInput.value = registro.fecha;
-  efectivoInicialInput.value = registro.efectivoInicial;
   ventaTurnoInput.value = registro.ventaTurno;
   numeroTicketsInput.value = registro.numeroTickets;
   totalCalculadoInput.value = formatearMoneda(registro.totalCalculado);
@@ -747,7 +739,7 @@ function limpiarFormularioCompleto() {
   promedioTicketInput.value = formatearMoneda(0);
   cancelarEdicionBtn.classList.add("hidden");
   actualizarAvisoModo();
-  efectivoInicialInput.focus();
+  ventaTurnoInput.focus();
 }
 
 async function borrarHistorial() {
@@ -883,7 +875,6 @@ function exportarCsv() {
   const encabezados = [
     "Fecha",
     "Turno",
-    "Efectivo inicial",
     "Venta por turno",
     "Numero de tickets",
     "Total calculado",
@@ -894,7 +885,6 @@ function exportarCsv() {
   const filas = registrosFiltrados.map((registro) => [
     registro.fecha,
     registro.turno,
-    registro.efectivoInicial,
     registro.ventaTurno,
     registro.numeroTickets,
     registro.totalCalculado,
@@ -931,7 +921,6 @@ function generarPdf() {
         <tr>
           <td>${registro.fecha}</td>
           <td>${registro.turno}</td>
-          <td>${formatearMoneda(registro.efectivoInicial)}</td>
           <td>${formatearMoneda(registro.ventaTurno)}</td>
           <td>${registro.numeroTickets}</td>
           <td>${formatearMoneda(registro.totalCalculado)}</td>
@@ -988,7 +977,6 @@ function generarPdf() {
           <tr>
             <th>Fecha</th>
             <th>Turno</th>
-            <th>Efectivo inicial</th>
             <th>Venta</th>
             <th>Tickets</th>
             <th>Total calculado</th>

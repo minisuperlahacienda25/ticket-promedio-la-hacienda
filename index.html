@@ -44,7 +44,7 @@
           <p class="eyebrow">MINISUPER LA HACIENDA</p>
           <h1>Control de ventas por turno</h1>
           <p class="subtitle">
-            Registra el efectivo inicial, la venta y los tickets de cada turno para obtener
+            Registra la venta y los tickets de cada turno para obtener
             el total calculado y el ticket promedio al instante.
           </p>
         </div>
@@ -75,11 +75,6 @@
         <div class="field">
           <label for="fecha">Fecha</label>
           <input id="fecha" name="fecha" type="date" required>
-        </div>
-
-        <div class="field">
-          <label for="efectivoInicial">Efectivo inicial en caja</label>
-          <input id="efectivoInicial" name="efectivoInicial" type="number" min="0" step="0.01" placeholder="0.00" required>
         </div>
 
         <div class="field">
@@ -496,7 +491,6 @@
             <tr>
               <th>Fecha</th>
               <th>Turno</th>
-              <th>Efectivo inicial</th>
               <th>Venta</th>
               <th>Tickets</th>
               <th>Total calculado</th>
@@ -507,7 +501,7 @@
           </thead>
           <tbody id="tabla-registros">
             <tr class="empty-row">
-              <td colspan="9">Aun no hay registros guardados.</td>
+              <td colspan="8">Aun no hay registros guardados.</td>
             </tr>
           </tbody>
         </table>
