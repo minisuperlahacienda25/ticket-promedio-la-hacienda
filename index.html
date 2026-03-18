@@ -208,6 +208,39 @@
       </article>
     </section>
 
+    <section class="panel" data-section="tickets">
+      <div class="panel-header">
+        <div>
+          <h2>Reporte semanal automatico</h2>
+          <p id="semana-actual-texto">Se actualiza automaticamente con la semana en curso.</p>
+        </div>
+        <div class="header-actions">
+          <button type="button" id="generar-pdf-semanal" class="secondary">Generar PDF semanal</button>
+        </div>
+      </div>
+
+      <div class="summary-grid compact-gap">
+        <article class="card">
+          <p class="card-label">Turnos de la semana</p>
+          <p id="semana-turnos" class="card-value">0</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Venta semanal</p>
+          <p id="semana-venta" class="card-value">$0.00</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Ticket promedio semanal</p>
+          <p id="semana-promedio" class="card-value">$0.00</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Producto sugerido mas pedido</p>
+          <p id="semana-producto-top" class="card-value small-value">Sin datos</p>
+        </article>
+      </div>
+
+      <div id="semana-empleadas" class="employee-grid"></div>
+    </section>
+
     <section class="panel hidden" data-section="sugerencias">
       <div class="panel-header">
         <div>

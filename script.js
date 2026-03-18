@@ -37,11 +37,18 @@ const tablaRegistros = document.getElementById("tabla-registros");
 const totalTurnos = document.getElementById("total-turnos");
 const ventaAcumulada = document.getElementById("venta-acumulada");
 const promedioGlobal = document.getElementById("promedio-global");
+const semanaActualTexto = document.getElementById("semana-actual-texto");
+const semanaTurnos = document.getElementById("semana-turnos");
+const semanaVenta = document.getElementById("semana-venta");
+const semanaPromedio = document.getElementById("semana-promedio");
+const semanaProductoTop = document.getElementById("semana-producto-top");
+const semanaEmpleadas = document.getElementById("semana-empleadas");
 const limpiarFormBtn = document.getElementById("limpiar-form");
 const cancelarEdicionBtn = document.getElementById("cancelar-edicion");
 const borrarRegistrosBtn = document.getElementById("borrar-registros");
 const exportarCsvBtn = document.getElementById("exportar-csv");
 const generarPdfBtn = document.getElementById("generar-pdf");
+const generarPdfSemanalBtn = document.getElementById("generar-pdf-semanal");
 const filtroEmpleada = document.getElementById("filtro-empleada");
 const filtroFechaInicio = document.getElementById("filtro-fecha-inicio");
 const filtroFechaFin = document.getElementById("filtro-fecha-fin");
@@ -113,6 +120,7 @@ function registrarEventos() {
   borrarRegistrosBtn.addEventListener("click", borrarHistorial);
   exportarCsvBtn.addEventListener("click", exportarCsv);
   generarPdfBtn.addEventListener("click", generarPdf);
+  generarPdfSemanalBtn.addEventListener("click", generarPdfSemanal);
   loginForm.addEventListener("submit", manejarLogin);
   cerrarSesionBtn.addEventListener("click", manejarCerrarSesion);
   themeToggle.addEventListener("click", alternarTema);
@@ -475,6 +483,37 @@ function renderizarResumen() {
   totalTurnos.textContent = String(analisis.turnos);
   ventaAcumulada.textContent = formatearMoneda(analisis.ventaTotal);
   promedioGlobal.textContent = formatearMoneda(analisis.promedio);
+}
+
+function renderizarResumenSemanal() {
+  const { inicio, fin } = obtenerRangoSemanaActual();
+  const registrosSemana = registros.filter((registro) => registro.fecha >= inicio && registro.fecha <= fin);
+  const sugerenciasSemana = sugerencias.filter((item) => item.fecha >= inicio && item.fecha <= fin);
+  const analisis = obtenerAnalisisResumen(registrosSemana);
+  const resumenSugerencias = obtenerResumenSugerencias(sugerenciasSemana);
+
+  semanaActualTexto.textContent = `Semana actual: ${formatearFechaCorta(inicio)} al ${formatearFechaCorta(fin)}`;
+  semanaTurnos.textContent = String(analisis.turnos);
+  semanaVenta.textContent = formatearMoneda(analisis.ventaTotal);
+  semanaPromedio.textContent = formatearMoneda(analisis.promedio);
+  semanaProductoTop.textContent = resumenSugerencias.productoTop || "Sin datos";
+
+  semanaEmpleadas.innerHTML = EMPLEADAS.map((empleada) => {
+    const datos = registrosSemana.filter((registro) => registro.turno === empleada);
+    const totalVenta = datos.reduce((acumulado, registro) => acumulado + registro.ventaTurno, 0);
+    const totalTickets = datos.reduce((acumulado, registro) => acumulado + registro.numeroTickets, 0);
+    const promedio = totalTickets > 0 ? totalVenta / totalTickets : 0;
+
+    return `
+      <article class="card">
+        <p class="card-label">${empleada}</p>
+        <p class="card-value">${formatearMoneda(totalVenta)}</p>
+        <p>Turnos en la semana: ${datos.length}</p>
+        <p>Tickets atendidos: ${totalTickets}</p>
+        <p>Promedio semanal: ${formatearMoneda(promedio)}</p>
+      </article>
+    `;
+  }).join("");
 }
 
 function renderizarAnalisisEmpleadas() {
@@ -900,6 +939,119 @@ function generarPdfSugerencias() {
   ventana.document.close();
 }
 
+function generarPdfSemanal() {
+  const { inicio, fin } = obtenerRangoSemanaActual();
+  const registrosSemana = registros.filter((registro) => registro.fecha >= inicio && registro.fecha <= fin);
+  const sugerenciasSemana = sugerencias.filter((item) => item.fecha >= inicio && item.fecha <= fin);
+
+  if (!registrosSemana.length && !sugerenciasSemana.length) {
+    alert("No hay datos en la semana actual para generar el reporte.");
+    return;
+  }
+
+  const analisis = obtenerAnalisisResumen(registrosSemana);
+  const resumenSugerencias = obtenerResumenSugerencias(sugerenciasSemana);
+  const resumenEmpleadas = EMPLEADAS.map((empleada) => {
+    const datos = registrosSemana.filter((registro) => registro.turno === empleada);
+    const venta = datos.reduce((acumulado, registro) => acumulado + registro.ventaTurno, 0);
+    const tickets = datos.reduce((acumulado, registro) => acumulado + registro.numeroTickets, 0);
+    return {
+      empleada,
+      turnos: datos.length,
+      venta,
+      promedio: tickets > 0 ? venta / tickets : 0,
+    };
+  });
+
+  const filasEmpleadas = resumenEmpleadas.map((item) => `
+    <tr>
+      <td>${item.empleada}</td>
+      <td>${item.turnos}</td>
+      <td>${formatearMoneda(item.venta)}</td>
+      <td>${formatearMoneda(item.promedio)}</td>
+    </tr>
+  `).join("");
+
+  const filasSugerencias = resumenSugerencias.productos.slice(0, 10).map((item) => `
+    <tr>
+      <td>${item.producto}</td>
+      <td>${item.cantidad}</td>
+      <td>${item.ultimaFecha || "-"}</td>
+      <td>${item.ultimaEmpleada || "-"}</td>
+    </tr>
+  `).join("");
+
+  const ventana = window.open("", "_blank", "width=1200,height=900");
+  if (!ventana) {
+    alert("Tu navegador bloqueo la ventana del reporte. Permite ventanas emergentes e intenta de nuevo.");
+    return;
+  }
+
+  ventana.document.write(`
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <title>Reporte semanal - MINISUPER LA HACIENDA</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 32px; color: #2f241a; }
+        .brand { display: flex; gap: 16px; align-items: center; margin-bottom: 20px; }
+        .brand img { width: 90px; height: 90px; object-fit: contain; }
+        .meta { margin-bottom: 20px; color: #6f5844; }
+        .summary { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .box { border: 1px solid #d7c3aa; border-radius: 10px; padding: 12px; background: #fbf4ea; }
+        .box strong { display: block; margin-bottom: 8px; font-size: 12px; text-transform: uppercase; color: #6f5844; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 24px; }
+        th, td { border: 1px solid #e4d3be; padding: 8px; text-align: left; vertical-align: top; }
+        th { background: #f3e6d5; }
+        h1, h2, p { margin-top: 0; }
+      </style>
+    </head>
+    <body>
+      <div class="brand">
+        <img src="logo.png.png" alt="Logo">
+        <div>
+          <h1>MINISUPER LA HACIENDA</h1>
+          <p class="meta">Reporte semanal automatico | Semana del ${formatearFechaCorta(inicio)} al ${formatearFechaCorta(fin)} | Generado el ${formatearFechaHoraActual()}</p>
+        </div>
+      </div>
+      <div class="summary">
+        <div class="box"><strong>Turnos de la semana</strong>${analisis.turnos}</div>
+        <div class="box"><strong>Venta semanal</strong>${formatearMoneda(analisis.ventaTotal)}</div>
+        <div class="box"><strong>Tickets semanales</strong>${analisis.ticketsTotales}</div>
+        <div class="box"><strong>Promedio semanal</strong>${formatearMoneda(analisis.promedio)}</div>
+      </div>
+      <h2>Resumen por empleada</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Empleada</th>
+            <th>Turnos</th>
+            <th>Venta semanal</th>
+            <th>Ticket promedio</th>
+          </tr>
+        </thead>
+        <tbody>${filasEmpleadas}</tbody>
+      </table>
+      <h2>Sugerencias mas pedidas de la semana</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Veces solicitado</th>
+            <th>Ultima fecha</th>
+            <th>Ultimo registro</th>
+          </tr>
+        </thead>
+        <tbody>${filasSugerencias || '<tr><td colspan="4">Sin sugerencias esta semana.</td></tr>'}</tbody>
+      </table>
+      <script>window.onload = function () { window.print(); };<\/script>
+    </body>
+    </html>
+  `);
+  ventana.document.close();
+}
+
 function obtenerRegistrosVisibles(aplicarOrden = true) {
   let resultado = [...registros];
 
@@ -1023,11 +1175,11 @@ function obtenerAnalisisResumen(registrosFiltrados) {
   return { turnos, ventaTotal, ticketsTotales, promedio };
 }
 
-function obtenerResumenSugerencias() {
+function obtenerResumenSugerencias(lista = sugerencias) {
   const mapa = new Map();
   let totalSolicitudes = 0;
 
-  sugerencias.forEach((item) => {
+  lista.forEach((item) => {
     totalSolicitudes += item.cantidad;
     const llave = item.producto.trim().toLowerCase();
     const actual = mapa.get(llave) || {
@@ -1078,6 +1230,7 @@ function cargarSugerenciasLocales() {
 function refrescarVista() {
   renderizarRegistros();
   renderizarResumen();
+  renderizarResumenSemanal();
   renderizarAnalisisEmpleadas();
   renderizarResumenSugerencias();
 }
@@ -1117,6 +1270,38 @@ function obtenerFechaHoy() {
   const offset = hoy.getTimezoneOffset();
   const fechaLocal = new Date(hoy.getTime() - offset * 60000);
   return fechaLocal.toISOString().split("T")[0];
+}
+
+function obtenerRangoSemanaActual() {
+  const hoy = new Date();
+  const dia = hoy.getDay();
+  const ajusteLunes = dia === 0 ? -6 : 1 - dia;
+  const inicio = new Date(hoy);
+  inicio.setHours(0, 0, 0, 0);
+  inicio.setDate(hoy.getDate() + ajusteLunes);
+
+  const fin = new Date(inicio);
+  fin.setDate(inicio.getDate() + 6);
+
+  return {
+    inicio: convertirFechaIsoLocal(inicio),
+    fin: convertirFechaIsoLocal(fin),
+  };
+}
+
+function convertirFechaIsoLocal(fecha) {
+  const offset = fecha.getTimezoneOffset();
+  const fechaLocal = new Date(fecha.getTime() - offset * 60000);
+  return fechaLocal.toISOString().split("T")[0];
+}
+
+function formatearFechaCorta(fechaIso) {
+  if (!fechaIso) {
+    return "-";
+  }
+
+  const [year, month, day] = fechaIso.split("-");
+  return `${day}/${month}/${year}`;
 }
 
 function formatearFechaHoraActual() {

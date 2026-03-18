@@ -410,6 +410,12 @@ button[type="submit"] {
   gap: 16px;
 }
 
+.employee-grid .card p:last-child,
+.employee-grid .card p:nth-last-child(2),
+.employee-grid .card p:nth-last-child(3) {
+  margin-bottom: 6px;
+}
+
 .top-sugerencias-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
