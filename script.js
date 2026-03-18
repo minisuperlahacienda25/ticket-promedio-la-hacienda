@@ -68,6 +68,7 @@ const tablaSugerencias = document.getElementById("tabla-sugerencias");
 const totalSugerencias = document.getElementById("total-sugerencias");
 const productosDistintos = document.getElementById("productos-distintos");
 const productoTop = document.getElementById("producto-top");
+const topSugerencias = document.getElementById("top-sugerencias");
 const generarPdfSugerenciasBtn = document.getElementById("generar-pdf-sugerencias");
 const topVentasIds = ["topVenta1", "topVenta2", "topVenta3", "topVenta4", "topVenta5"];
 const bajaRotacionIds = ["bajaRotacion1", "bajaRotacion2", "bajaRotacion3"];
@@ -491,6 +492,7 @@ function renderizarResumenSugerencias() {
   totalSugerencias.textContent = String(resumen.totalSolicitudes);
   productosDistintos.textContent = String(resumen.productos.length);
   productoTop.textContent = resumen.productoTop || "Sin datos";
+  renderizarTopSugerencias(resumen.productos);
 
   if (!resumen.productos.length) {
     tablaSugerencias.innerHTML = `
@@ -511,6 +513,31 @@ function renderizarResumenSugerencias() {
           <td>${item.ultimaEmpleada || "-"}</td>
           <td>${item.notas || "-"}</td>
         </tr>
+      `;
+    })
+    .join("");
+}
+
+function renderizarTopSugerencias(productos) {
+  if (!productos.length) {
+    topSugerencias.innerHTML = `
+      <article class="card">
+        <p class="card-label">Sin datos</p>
+        <p class="small-value">Aun no hay sugerencias suficientes.</p>
+      </article>
+    `;
+    return;
+  }
+
+  topSugerencias.innerHTML = productos
+    .slice(0, 10)
+    .map((item, index) => {
+      return `
+        <article class="card">
+          <p class="card-label">#${index + 1}</p>
+          <p class="small-value">${item.producto}</p>
+          <p>Veces solicitado: ${item.cantidad}</p>
+        </article>
       `;
     })
     .join("");

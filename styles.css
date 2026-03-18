@@ -379,6 +379,13 @@ button[type="submit"] {
   gap: 16px;
 }
 
+.top-sugerencias-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
 .card {
   background: rgba(255, 248, 239, 0.92);
   border: 1px solid var(--line);
