@@ -22,6 +22,7 @@ import {
 
 const STORAGE_KEY = "minisuper-turnos";
 const STORAGE_SUGERENCIAS_KEY = "minisuper-sugerencias";
+const STORAGE_THEME_KEY = "minisuper-tema";
 const COLLECTION_NAME = "minisuper_turnos";
 const SUGERENCIAS_COLLECTION_NAME = "minisuper_sugerencias";
 
@@ -52,6 +53,7 @@ const authOverlay = document.getElementById("auth-overlay");
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const sessionUser = document.getElementById("session-user");
+const themeToggle = document.getElementById("theme-toggle");
 const cerrarSesionBtn = document.getElementById("cerrar-sesion");
 const menuToggle = document.getElementById("menu-toggle");
 const appMenu = document.getElementById("app-menu");
@@ -90,6 +92,7 @@ let currentSection = "tickets";
 
 fechaInput.value = obtenerFechaHoy();
 sugerenciaFechaInput.value = obtenerFechaHoy();
+aplicarTemaGuardado();
 actualizarCalculados();
 registrarEventos();
 inicializarDatos();
@@ -112,6 +115,7 @@ function registrarEventos() {
   generarPdfBtn.addEventListener("click", generarPdf);
   loginForm.addEventListener("submit", manejarLogin);
   cerrarSesionBtn.addEventListener("click", manejarCerrarSesion);
+  themeToggle.addEventListener("click", alternarTema);
   limpiarFiltrosBtn.addEventListener("click", limpiarFiltros);
   sugerenciasForm.addEventListener("submit", manejarSugerencia);
   limpiarSugerenciaBtn.addEventListener("click", limpiarFormularioSugerencia);
@@ -215,6 +219,19 @@ async function manejarCerrarSesion() {
   }
 
   await signOut(auth);
+}
+
+function aplicarTemaGuardado() {
+  const tema = localStorage.getItem(STORAGE_THEME_KEY) || "dia";
+  document.body.classList.toggle("theme-dark", tema === "noche");
+  themeToggle.textContent = tema === "noche" ? "Modo de dia" : "Modo nocturno";
+}
+
+function alternarTema() {
+  const oscuroActivo = document.body.classList.toggle("theme-dark");
+  const tema = oscuroActivo ? "noche" : "dia";
+  localStorage.setItem(STORAGE_THEME_KEY, tema);
+  themeToggle.textContent = oscuroActivo ? "Modo de dia" : "Modo nocturno";
 }
 
 function toggleMenu(event) {
