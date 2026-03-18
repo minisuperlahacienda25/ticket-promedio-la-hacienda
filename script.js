@@ -32,7 +32,6 @@ const form = document.getElementById("turno-form");
 const fechaInput = document.getElementById("fecha");
 const ventaTurnoInput = document.getElementById("ventaTurno");
 const numeroTicketsInput = document.getElementById("numeroTickets");
-const totalCalculadoInput = document.getElementById("totalCalculado");
 const promedioTicketInput = document.getElementById("promedioTicket");
 const tablaRegistros = document.getElementById("tabla-registros");
 const totalTurnos = document.getElementById("total-turnos");
@@ -389,7 +388,6 @@ function construirRegistroPayload(ventaTurno, numeroTickets) {
     turno: form.turno.value,
     ventaTurno,
     numeroTickets,
-    totalCalculado: ventaTurno,
     promedioTicket: ventaTurno / numeroTickets,
     checklist: obtenerChecklist(),
     topVentas: obtenerListaProductos(topVentasIds),
@@ -444,7 +442,6 @@ function normalizarRegistroRemoto(item) {
     turno: data.turno || "",
     ventaTurno: Number(data.ventaTurno || 0),
     numeroTickets: Number(data.numeroTickets || 0),
-    totalCalculado: Number(data.totalCalculado || data.ventaTurno || 0),
     promedioTicket: Number(data.promedioTicket || 0),
     checklist: data.checklist || {},
     topVentas: Array.isArray(data.topVentas) ? data.topVentas : [],
@@ -484,7 +481,6 @@ function actualizarCalculados() {
   const ventaTurno = leerNumero(ventaTurnoInput.value);
   const numeroTickets = leerNumero(numeroTicketsInput.value);
 
-  totalCalculadoInput.value = formatearMoneda(ventaTurno);
   promedioTicketInput.value = formatearMoneda(numeroTickets > 0 ? ventaTurno / numeroTickets : 0);
 }
 
@@ -494,7 +490,7 @@ function renderizarRegistros() {
   if (!registrosFiltrados.length) {
     tablaRegistros.innerHTML = `
       <tr class="empty-row">
-        <td colspan="8">No hay registros para el filtro seleccionado.</td>
+        <td colspan="7">No hay registros para el filtro seleccionado.</td>
       </tr>
     `;
     return;
@@ -508,7 +504,6 @@ function renderizarRegistros() {
           <td>${registro.turno}</td>
           <td>${formatearMoneda(registro.ventaTurno)}</td>
           <td>${registro.numeroTickets}</td>
-          <td>${formatearMoneda(registro.totalCalculado)}</td>
           <td>${formatearMoneda(registro.promedioTicket)}</td>
           <td class="detail-cell">${crearResumenOperativo(registro, "<br>")}</td>
           <td>
@@ -577,15 +572,12 @@ function renderizarAnalisisEmpleadas() {
       const venta = datos.reduce((acumulado, registro) => acumulado + registro.ventaTurno, 0);
       const tickets = datos.reduce((acumulado, registro) => acumulado + registro.numeroTickets, 0);
       const promedio = tickets > 0 ? venta / tickets : 0;
-      const totalCaja = datos.reduce((acumulado, registro) => acumulado + registro.totalCalculado, 0);
-
       return `
         <article class="card">
           <p class="card-label">${empleada}</p>
           <p class="card-value">${formatearMoneda(venta)}</p>
           <p>Turnos registrados: ${turnos}</p>
           <p>Tickets atendidos: ${tickets}</p>
-          <p>Total calculado acumulado: ${formatearMoneda(totalCaja)}</p>
           <p>Promedio del ticket: ${formatearMoneda(promedio)}</p>
         </article>
       `;
@@ -705,7 +697,6 @@ function iniciarEdicion(id) {
   fechaInput.value = registro.fecha;
   ventaTurnoInput.value = registro.ventaTurno;
   numeroTicketsInput.value = registro.numeroTickets;
-  totalCalculadoInput.value = formatearMoneda(registro.totalCalculado);
   promedioTicketInput.value = formatearMoneda(registro.promedioTicket);
 
   document.getElementById("check-caja-limpia").checked = Boolean(registro.checklist?.cajaLimpia);
@@ -735,7 +726,6 @@ function limpiarFormularioCompleto() {
   editingId = null;
   form.reset();
   fechaInput.value = obtenerFechaHoy();
-  totalCalculadoInput.value = formatearMoneda(0);
   promedioTicketInput.value = formatearMoneda(0);
   cancelarEdicionBtn.classList.add("hidden");
   actualizarAvisoModo();
@@ -877,7 +867,6 @@ function exportarCsv() {
     "Turno",
     "Venta por turno",
     "Numero de tickets",
-    "Total calculado",
     "Promedio del ticket",
     "Detalle operativo",
   ];
@@ -887,7 +876,6 @@ function exportarCsv() {
     registro.turno,
     registro.ventaTurno,
     registro.numeroTickets,
-    registro.totalCalculado,
     registro.promedioTicket,
     crearResumenOperativo(registro),
   ]);
@@ -923,7 +911,6 @@ function generarPdf() {
           <td>${registro.turno}</td>
           <td>${formatearMoneda(registro.ventaTurno)}</td>
           <td>${registro.numeroTickets}</td>
-          <td>${formatearMoneda(registro.totalCalculado)}</td>
           <td>${formatearMoneda(registro.promedioTicket)}</td>
           <td>${crearResumenOperativo(registro, "<br>")}</td>
         </tr>
@@ -979,7 +966,6 @@ function generarPdf() {
             <th>Turno</th>
             <th>Venta</th>
             <th>Tickets</th>
-            <th>Total calculado</th>
             <th>Ticket promedio</th>
             <th>Detalle operativo</th>
           </tr>

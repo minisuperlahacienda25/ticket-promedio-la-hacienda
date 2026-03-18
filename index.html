@@ -45,7 +45,7 @@
           <h1>Control de ventas por turno</h1>
           <p class="subtitle">
             Registra la venta y los tickets de cada turno para obtener
-            el total calculado y el ticket promedio al instante.
+            el ticket promedio al instante.
           </p>
         </div>
       </div>
@@ -85,11 +85,6 @@
         <div class="field">
           <label for="numeroTickets">Numero de tickets</label>
           <input id="numeroTickets" name="numeroTickets" type="number" min="1" step="1" placeholder="0" required>
-        </div>
-
-        <div class="field readonly">
-          <label for="totalCalculado">Total calculado</label>
-          <input id="totalCalculado" name="totalCalculado" type="text" readonly value="$0.00">
         </div>
 
         <div class="field readonly">
@@ -493,7 +488,6 @@
               <th>Turno</th>
               <th>Venta</th>
               <th>Tickets</th>
-              <th>Total calculado</th>
               <th>Ticket promedio</th>
               <th>Detalle operativo</th>
               <th>Acciones</th>
@@ -501,7 +495,7 @@
           </thead>
           <tbody id="tabla-registros">
             <tr class="empty-row">
-              <td colspan="8">Aun no hay registros guardados.</td>
+              <td colspan="7">Aun no hay registros guardados.</td>
             </tr>
           </tbody>
         </table>
