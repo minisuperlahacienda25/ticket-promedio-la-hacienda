@@ -37,6 +37,7 @@
           <div id="app-menu" class="app-menu hidden">
             <button type="button" class="menu-link active" data-section="tickets">Registros de ticket promedio</button>
             <button type="button" class="menu-link" data-section="sugerencias">Sugerencias de clientes</button>
+            <button type="button" class="menu-link" data-section="actividades">Reporte diario de actividades</button>
           </div>
         </div>
         <div>
@@ -338,6 +339,92 @@
           <tbody id="tabla-sugerencias">
             <tr class="empty-row">
               <td colspan="5">Aun no hay sugerencias guardadas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel hidden" data-section="actividades">
+      <div class="panel-header">
+        <div>
+          <h2>Reporte diario de actividades por empleada</h2>
+          <p>Registra lo que hace cada empleada durante su turno para revisar su desempeno semanal.</p>
+        </div>
+      </div>
+
+      <form id="actividades-form" class="form-grid">
+        <div class="field">
+          <label for="actividad-fecha">Fecha</label>
+          <input id="actividad-fecha" name="actividadFecha" type="date" required>
+        </div>
+
+        <div class="field">
+          <label for="actividad-empleada">Quien lo hizo</label>
+          <select id="actividad-empleada" name="actividadEmpleada" required>
+            <option value="NITZIA">NITZIA</option>
+            <option value="PAOLA">PAOLA</option>
+            <option value="VALERIA">VALERIA</option>
+          </select>
+        </div>
+
+        <div class="field span-full">
+          <label for="actividad-detalle">Que hicieron</label>
+          <textarea id="actividad-detalle" name="actividadDetalle" rows="4" placeholder="Ej. acomode anaqueles, revise precios, limpie refrigeradores, hice inventario parcial..." required></textarea>
+        </div>
+
+        <div class="actions span-full">
+          <button type="submit">Guardar actividad</button>
+          <button type="button" id="limpiar-actividad" class="secondary">Limpiar</button>
+        </div>
+      </form>
+
+      <div class="panel-header">
+        <div>
+          <h2>Resumen semanal automatico</h2>
+          <p id="actividad-semana-texto">Se actualiza solo con la semana actual.</p>
+        </div>
+        <div class="header-actions">
+          <button type="button" id="generar-pdf-actividades" class="secondary">Generar PDF semanal</button>
+        </div>
+      </div>
+
+      <div class="summary-grid compact-gap">
+        <article class="card">
+          <p class="card-label">Actividades de la semana</p>
+          <p id="actividad-total-semana" class="card-value">0</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Empleada mas activa</p>
+          <p id="actividad-empleada-top" class="card-value small-value">Sin datos</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Ultimo registro</p>
+          <p id="actividad-ultimo-registro" class="card-value small-value">Sin datos</p>
+        </article>
+      </div>
+
+      <div id="actividad-resumen-empleadas" class="employee-grid"></div>
+
+      <div class="panel-header">
+        <div>
+          <h2>Historial de actividades</h2>
+          <p>Se ordena de la mas reciente a la mas antigua para facilitar el seguimiento.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Empleada</th>
+              <th>Actividad realizada</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-actividades">
+            <tr class="empty-row">
+              <td colspan="3">Aun no hay actividades registradas.</td>
             </tr>
           </tbody>
         </table>

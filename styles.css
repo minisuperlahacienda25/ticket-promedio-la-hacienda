@@ -320,6 +320,7 @@ th {
 
 .field input,
 .field select,
+textarea,
 button {
   border-radius: 14px;
   border: 1px solid var(--line);
@@ -327,11 +328,19 @@ button {
 }
 
 .field input,
-.field select {
+.field select,
+textarea {
   padding: 14px 16px;
   background: #fffaf2;
   color: var(--text);
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.2s ease;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
 }
 
 .readonly input {
@@ -536,6 +545,7 @@ body.theme-dark .secondary {
 
 body.theme-dark .field input,
 body.theme-dark .field select,
+body.theme-dark textarea,
 body.theme-dark .readonly input {
   background: rgba(29, 24, 20, 0.94);
   color: var(--text);

@@ -22,9 +22,11 @@ import {
 
 const STORAGE_KEY = "minisuper-turnos";
 const STORAGE_SUGERENCIAS_KEY = "minisuper-sugerencias";
+const STORAGE_ACTIVIDADES_KEY = "minisuper-actividades";
 const STORAGE_THEME_KEY = "minisuper-tema";
 const COLLECTION_NAME = "minisuper_turnos";
 const SUGERENCIAS_COLLECTION_NAME = "minisuper_sugerencias";
+const ACTIVIDADES_COLLECTION_NAME = "minisuper_actividades";
 
 const form = document.getElementById("turno-form");
 const fechaInput = document.getElementById("fecha");
@@ -43,6 +45,18 @@ const semanaVenta = document.getElementById("semana-venta");
 const semanaPromedio = document.getElementById("semana-promedio");
 const semanaProductoTop = document.getElementById("semana-producto-top");
 const semanaEmpleadas = document.getElementById("semana-empleadas");
+const actividadesForm = document.getElementById("actividades-form");
+const actividadFechaInput = document.getElementById("actividad-fecha");
+const actividadEmpleadaInput = document.getElementById("actividad-empleada");
+const actividadDetalleInput = document.getElementById("actividad-detalle");
+const limpiarActividadBtn = document.getElementById("limpiar-actividad");
+const generarPdfActividadesBtn = document.getElementById("generar-pdf-actividades");
+const actividadSemanaTexto = document.getElementById("actividad-semana-texto");
+const actividadTotalSemana = document.getElementById("actividad-total-semana");
+const actividadEmpleadaTop = document.getElementById("actividad-empleada-top");
+const actividadUltimoRegistro = document.getElementById("actividad-ultimo-registro");
+const actividadResumenEmpleadas = document.getElementById("actividad-resumen-empleadas");
+const tablaActividades = document.getElementById("tabla-actividades");
 const limpiarFormBtn = document.getElementById("limpiar-form");
 const cancelarEdicionBtn = document.getElementById("cancelar-edicion");
 const borrarRegistrosBtn = document.getElementById("borrar-registros");
@@ -93,12 +107,15 @@ let db = null;
 let auth = null;
 let unsubscribeTurnos = null;
 let unsubscribeSugerencias = null;
+let unsubscribeActividades = null;
 let currentUser = null;
 let sugerencias = [];
+let actividades = [];
 let currentSection = "tickets";
 
 fechaInput.value = obtenerFechaHoy();
 sugerenciaFechaInput.value = obtenerFechaHoy();
+actividadFechaInput.value = obtenerFechaHoy();
 aplicarTemaGuardado();
 actualizarCalculados();
 registrarEventos();
@@ -128,6 +145,9 @@ function registrarEventos() {
   sugerenciasForm.addEventListener("submit", manejarSugerencia);
   limpiarSugerenciaBtn.addEventListener("click", limpiarFormularioSugerencia);
   generarPdfSugerenciasBtn.addEventListener("click", generarPdfSugerencias);
+  actividadesForm.addEventListener("submit", manejarActividad);
+  limpiarActividadBtn.addEventListener("click", limpiarFormularioActividad);
+  generarPdfActividadesBtn.addEventListener("click", generarPdfActividadesSemanal);
   menuToggle.addEventListener("click", toggleMenu);
   menuLinks.forEach((button) => {
     button.addEventListener("click", () => cambiarSeccion(button.dataset.section));
@@ -163,6 +183,7 @@ async function inicializarDatos() {
 
   registros = cargarRegistrosLocales();
   sugerencias = cargarSugerenciasLocales();
+  actividades = cargarActividadesLocales();
   ocultarPantallaAcceso();
   sessionUser.textContent = "Modo local sin inicio de sesion.";
   refrescarVista();
@@ -184,8 +205,13 @@ function vigilarSesion() {
         unsubscribeSugerencias();
         unsubscribeSugerencias = null;
       }
+      if (unsubscribeActividades) {
+        unsubscribeActividades();
+        unsubscribeActividades = null;
+      }
       registros = [];
       sugerencias = [];
+      actividades = [];
       refrescarVista();
       return;
     }
@@ -195,6 +221,7 @@ function vigilarSesion() {
     cerrarSesionBtn.classList.remove("hidden");
     escucharTurnosCompartidos();
     escucharSugerenciasCompartidas();
+    escucharActividadesCompartidas();
   });
 }
 
@@ -303,6 +330,24 @@ function escucharSugerenciasCompartidas() {
     consulta,
     (snapshot) => {
       sugerencias = snapshot.docs.map((item) => normalizarSugerenciaRemota(item));
+      refrescarVista();
+    },
+    (error) => {
+      console.error(error);
+    }
+  );
+}
+
+function escucharActividadesCompartidas() {
+  if (unsubscribeActividades) {
+    unsubscribeActividades();
+  }
+
+  const consulta = query(collection(db, ACTIVIDADES_COLLECTION_NAME), orderBy("createdAt", "desc"));
+  unsubscribeActividades = onSnapshot(
+    consulta,
+    (snapshot) => {
+      actividades = snapshot.docs.map((item) => normalizarActividadRemota(item));
       refrescarVista();
     },
     (error) => {
@@ -424,6 +469,18 @@ function normalizarSugerenciaRemota(item) {
     producto: data.producto || "",
     cantidad: Number(data.cantidad || 0),
     notas: data.notas || "",
+    createdAt: data.createdAt?.toMillis?.() || 0,
+  };
+}
+
+function normalizarActividadRemota(item) {
+  const data = item.data();
+
+  return {
+    id: item.id,
+    fecha: data.fecha || "",
+    empleada: data.empleada || "",
+    detalle: data.detalle || "",
     createdAt: data.createdAt?.toMillis?.() || 0,
   };
 }
@@ -574,6 +631,51 @@ function renderizarResumenSugerencias() {
     .join("");
 }
 
+function renderizarActividades() {
+  const { inicio, fin } = obtenerRangoSemanaActual();
+  const actividadesSemana = obtenerActividadesSemanaActual();
+  const resumen = obtenerResumenActividades(actividadesSemana);
+
+  actividadSemanaTexto.textContent = `Semana actual: ${formatearFechaCorta(inicio)} al ${formatearFechaCorta(fin)}`;
+  actividadTotalSemana.textContent = String(resumen.total);
+  actividadEmpleadaTop.textContent = resumen.empleadaTop || "Sin datos";
+  actividadUltimoRegistro.textContent = resumen.ultimoRegistro || "Sin datos";
+
+  actividadResumenEmpleadas.innerHTML = EMPLEADAS.map((empleada) => {
+    const datos = actividadesSemana.filter((item) => item.empleada === empleada);
+    const ultima = datos[0];
+
+    return `
+      <article class="card">
+        <p class="card-label">${empleada}</p>
+        <p class="card-value">${datos.length}</p>
+        <p>Actividades registradas: ${datos.length}</p>
+        <p>Ultima actividad: ${ultima ? ultima.detalle : "Sin registros"}</p>
+      </article>
+    `;
+  }).join("");
+
+  if (!actividades.length) {
+    tablaActividades.innerHTML = `
+      <tr class="empty-row">
+        <td colspan="3">Aun no hay actividades registradas.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  tablaActividades.innerHTML = [...actividades]
+    .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.createdAt - a.createdAt)
+    .map((item) => `
+      <tr>
+        <td>${item.fecha}</td>
+        <td>${item.empleada}</td>
+        <td>${item.detalle}</td>
+      </tr>
+    `)
+    .join("");
+}
+
 function renderizarTopSugerencias(productos) {
   if (!productos.length) {
     topSugerencias.innerHTML = `
@@ -720,11 +822,55 @@ async function manejarSugerencia(event) {
   }
 }
 
+async function manejarActividad(event) {
+  event.preventDefault();
+
+  const payload = {
+    fecha: actividadFechaInput.value,
+    empleada: actividadEmpleadaInput.value,
+    detalle: actividadDetalleInput.value.trim(),
+  };
+
+  if (!payload.detalle) {
+    alert("Escribe la actividad realizada por la empleada.");
+    actividadDetalleInput.focus();
+    return;
+  }
+
+  try {
+    if (modoDatos === "compartido") {
+      await addDoc(collection(db, ACTIVIDADES_COLLECTION_NAME), {
+        ...payload,
+        createdAt: serverTimestamp(),
+      });
+    } else {
+      actividades.unshift({
+        id: crypto.randomUUID(),
+        ...payload,
+        createdAt: Date.now(),
+      });
+      guardarActividadesLocales();
+      refrescarVista();
+    }
+
+    limpiarFormularioActividad();
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo guardar la actividad.");
+  }
+}
+
 function limpiarFormularioSugerencia() {
   sugerenciasForm.reset();
   sugerenciaFechaInput.value = obtenerFechaHoy();
   sugerenciaCantidadInput.value = 1;
   sugerenciaProductoInput.focus();
+}
+
+function limpiarFormularioActividad() {
+  actividadesForm.reset();
+  actividadFechaInput.value = obtenerFechaHoy();
+  actividadDetalleInput.focus();
 }
 
 function exportarCsv() {
@@ -1052,6 +1198,104 @@ function generarPdfSemanal() {
   ventana.document.close();
 }
 
+function generarPdfActividadesSemanal() {
+  const { inicio, fin } = obtenerRangoSemanaActual();
+  const actividadesSemana = obtenerActividadesSemanaActual();
+  const resumen = obtenerResumenActividades(actividadesSemana);
+
+  if (!actividadesSemana.length) {
+    alert("No hay actividades registradas en la semana actual.");
+    return;
+  }
+
+  const filasDetalle = actividadesSemana
+    .map((item) => `
+      <tr>
+        <td>${item.fecha}</td>
+        <td>${item.empleada}</td>
+        <td>${item.detalle}</td>
+      </tr>
+    `)
+    .join("");
+
+  const filasEmpleadas = EMPLEADAS.map((empleada) => {
+    const datos = actividadesSemana.filter((item) => item.empleada === empleada);
+    return `
+      <tr>
+        <td>${empleada}</td>
+        <td>${datos.length}</td>
+        <td>${datos[0] ? datos[0].detalle : "Sin registros"}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const ventana = window.open("", "_blank", "width=1200,height=900");
+  if (!ventana) {
+    alert("Tu navegador bloqueo la ventana del reporte. Permite ventanas emergentes e intenta de nuevo.");
+    return;
+  }
+
+  ventana.document.write(`
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <title>Reporte semanal de actividades - MINISUPER LA HACIENDA</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 32px; color: #2f241a; }
+        .brand { display: flex; gap: 16px; align-items: center; margin-bottom: 20px; }
+        .brand img { width: 90px; height: 90px; object-fit: contain; }
+        .meta { margin-bottom: 20px; color: #6f5844; }
+        .summary { display: grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .box { border: 1px solid #d7c3aa; border-radius: 10px; padding: 12px; background: #fbf4ea; }
+        .box strong { display: block; margin-bottom: 8px; font-size: 12px; text-transform: uppercase; color: #6f5844; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 24px; }
+        th, td { border: 1px solid #e4d3be; padding: 8px; text-align: left; vertical-align: top; }
+        th { background: #f3e6d5; }
+      </style>
+    </head>
+    <body>
+      <div class="brand">
+        <img src="logo.png.png" alt="Logo">
+        <div>
+          <h1>MINISUPER LA HACIENDA</h1>
+          <p class="meta">Reporte semanal de actividades | Semana del ${formatearFechaCorta(inicio)} al ${formatearFechaCorta(fin)} | Generado el ${formatearFechaHoraActual()}</p>
+        </div>
+      </div>
+      <div class="summary">
+        <div class="box"><strong>Actividades de la semana</strong>${resumen.total}</div>
+        <div class="box"><strong>Empleada mas activa</strong>${resumen.empleadaTop || "Sin datos"}</div>
+        <div class="box"><strong>Ultimo registro</strong>${resumen.ultimoRegistro || "Sin datos"}</div>
+      </div>
+      <h2>Resumen por empleada</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Empleada</th>
+            <th>Actividades registradas</th>
+            <th>Ultima actividad</th>
+          </tr>
+        </thead>
+        <tbody>${filasEmpleadas}</tbody>
+      </table>
+      <h2>Detalle semanal de actividades</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Empleada</th>
+            <th>Actividad realizada</th>
+          </tr>
+        </thead>
+        <tbody>${filasDetalle}</tbody>
+      </table>
+      <script>window.onload = function () { window.print(); };<\/script>
+    </body>
+    </html>
+  `);
+  ventana.document.close();
+}
+
 function obtenerRegistrosVisibles(aplicarOrden = true) {
   let resultado = [...registros];
 
@@ -1209,6 +1453,35 @@ function obtenerResumenSugerencias(lista = sugerencias) {
   };
 }
 
+function obtenerActividadesSemanaActual() {
+  const { inicio, fin } = obtenerRangoSemanaActual();
+  return actividades.filter((item) => item.fecha >= inicio && item.fecha <= fin);
+}
+
+function obtenerResumenActividades(lista = actividades) {
+  const conteo = new Map();
+  let ultimo = null;
+
+  lista
+    .slice()
+    .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.createdAt - a.createdAt)
+    .forEach((item) => {
+      conteo.set(item.empleada, (conteo.get(item.empleada) || 0) + 1);
+      if (!ultimo) {
+        ultimo = item;
+      }
+    });
+
+  const empleadaTop = [...conteo.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+
+  return {
+    total: lista.length,
+    empleadaTop: empleadaTop ? `${empleadaTop[0]} (${empleadaTop[1]})` : "",
+    ultimoRegistro: ultimo ? `${ultimo.empleada} - ${ultimo.fecha}` : "",
+  };
+}
+
 function guardarRegistrosLocales() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
 }
@@ -1227,12 +1500,22 @@ function cargarSugerenciasLocales() {
   return datos ? JSON.parse(datos) : [];
 }
 
+function guardarActividadesLocales() {
+  localStorage.setItem(STORAGE_ACTIVIDADES_KEY, JSON.stringify(actividades));
+}
+
+function cargarActividadesLocales() {
+  const datos = localStorage.getItem(STORAGE_ACTIVIDADES_KEY);
+  return datos ? JSON.parse(datos) : [];
+}
+
 function refrescarVista() {
   renderizarRegistros();
   renderizarResumen();
   renderizarResumenSemanal();
   renderizarAnalisisEmpleadas();
   renderizarResumenSugerencias();
+  renderizarActividades();
 }
 
 function mostrarPantallaAcceso() {
