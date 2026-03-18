@@ -21,7 +21,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 
 const STORAGE_KEY = "minisuper-turnos";
+const STORAGE_SUGERENCIAS_KEY = "minisuper-sugerencias";
 const COLLECTION_NAME = "minisuper_turnos";
+const SUGERENCIAS_COLLECTION_NAME = "minisuper_sugerencias";
 
 const form = document.getElementById("turno-form");
 const fechaInput = document.getElementById("fecha");
@@ -51,6 +53,17 @@ const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const sessionUser = document.getElementById("session-user");
 const cerrarSesionBtn = document.getElementById("cerrar-sesion");
+const sugerenciasForm = document.getElementById("sugerencias-form");
+const sugerenciaFechaInput = document.getElementById("sugerencia-fecha");
+const sugerenciaEmpleadaInput = document.getElementById("sugerencia-empleada");
+const sugerenciaProductoInput = document.getElementById("sugerencia-producto");
+const sugerenciaCantidadInput = document.getElementById("sugerencia-cantidad");
+const sugerenciaNotasInput = document.getElementById("sugerencia-notas");
+const limpiarSugerenciaBtn = document.getElementById("limpiar-sugerencia");
+const tablaSugerencias = document.getElementById("tabla-sugerencias");
+const totalSugerencias = document.getElementById("total-sugerencias");
+const productosDistintos = document.getElementById("productos-distintos");
+const productoTop = document.getElementById("producto-top");
 const topVentasIds = ["topVenta1", "topVenta2", "topVenta3", "topVenta4", "topVenta5"];
 const bajaRotacionIds = ["bajaRotacion1", "bajaRotacion2", "bajaRotacion3"];
 const mermaProductoInput = document.getElementById("mermaProducto");
@@ -64,9 +77,12 @@ let editingId = null;
 let db = null;
 let auth = null;
 let unsubscribeTurnos = null;
+let unsubscribeSugerencias = null;
 let currentUser = null;
+let sugerencias = [];
 
 fechaInput.value = obtenerFechaHoy();
+sugerenciaFechaInput.value = obtenerFechaHoy();
 actualizarCalculados();
 registrarEventos();
 inicializarDatos();
@@ -90,6 +106,8 @@ function registrarEventos() {
   loginForm.addEventListener("submit", manejarLogin);
   cerrarSesionBtn.addEventListener("click", manejarCerrarSesion);
   limpiarFiltrosBtn.addEventListener("click", limpiarFiltros);
+  sugerenciasForm.addEventListener("submit", manejarSugerencia);
+  limpiarSugerenciaBtn.addEventListener("click", limpiarFormularioSugerencia);
 }
 
 async function inicializarDatos() {
@@ -119,6 +137,7 @@ async function inicializarDatos() {
   }
 
   registros = cargarRegistrosLocales();
+  sugerencias = cargarSugerenciasLocales();
   ocultarPantallaAcceso();
   sessionUser.textContent = "Modo local sin inicio de sesion.";
   refrescarVista();
@@ -136,7 +155,12 @@ function vigilarSesion() {
         unsubscribeTurnos();
         unsubscribeTurnos = null;
       }
+      if (unsubscribeSugerencias) {
+        unsubscribeSugerencias();
+        unsubscribeSugerencias = null;
+      }
       registros = [];
+      sugerencias = [];
       refrescarVista();
       return;
     }
@@ -145,6 +169,7 @@ function vigilarSesion() {
     sessionUser.textContent = `Sesion: ${user.email}`;
     cerrarSesionBtn.classList.remove("hidden");
     escucharTurnosCompartidos();
+    escucharSugerenciasCompartidas();
   });
 }
 
@@ -193,6 +218,24 @@ function escucharTurnosCompartidos() {
     (error) => {
       console.error(error);
       modoAviso.textContent = "Firebase esta configurado, pero el acceso a la base de datos fallo. Revisa la configuracion y las reglas.";
+    }
+  );
+}
+
+function escucharSugerenciasCompartidas() {
+  if (unsubscribeSugerencias) {
+    unsubscribeSugerencias();
+  }
+
+  const consulta = query(collection(db, SUGERENCIAS_COLLECTION_NAME), orderBy("createdAt", "desc"));
+  unsubscribeSugerencias = onSnapshot(
+    consulta,
+    (snapshot) => {
+      sugerencias = snapshot.docs.map((item) => normalizarSugerenciaRemota(item));
+      refrescarVista();
+    },
+    (error) => {
+      console.error(error);
     }
   );
 }
@@ -300,6 +343,20 @@ function normalizarRegistroRemoto(item) {
   };
 }
 
+function normalizarSugerenciaRemota(item) {
+  const data = item.data();
+
+  return {
+    id: item.id,
+    fecha: data.fecha || "",
+    empleada: data.empleada || "",
+    producto: data.producto || "",
+    cantidad: Number(data.cantidad || 0),
+    notas: data.notas || "",
+    createdAt: data.createdAt?.toMillis?.() || 0,
+  };
+}
+
 function actualizarCalculados() {
   const efectivoInicial = leerNumero(efectivoInicialInput.value);
   const ventaTurno = leerNumero(ventaTurnoInput.value);
@@ -384,6 +441,36 @@ function renderizarAnalisisEmpleadas() {
     .join("");
 }
 
+function renderizarResumenSugerencias() {
+  const resumen = obtenerResumenSugerencias();
+  totalSugerencias.textContent = String(resumen.totalSolicitudes);
+  productosDistintos.textContent = String(resumen.productos.length);
+  productoTop.textContent = resumen.productoTop || "Sin datos";
+
+  if (!resumen.productos.length) {
+    tablaSugerencias.innerHTML = `
+      <tr class="empty-row">
+        <td colspan="5">Aun no hay sugerencias guardadas.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  tablaSugerencias.innerHTML = resumen.productos
+    .map((item) => {
+      return `
+        <tr>
+          <td>${item.producto}</td>
+          <td>${item.cantidad}</td>
+          <td>${item.ultimaFecha || "-"}</td>
+          <td>${item.ultimaEmpleada || "-"}</td>
+          <td>${item.notas || "-"}</td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
 function iniciarEdicion(id) {
   const registro = registros.find((item) => item.id === id);
   if (!registro) {
@@ -457,6 +544,59 @@ async function borrarHistorial() {
     console.error(error);
     alert("No se pudo borrar el historial completo.");
   }
+}
+
+async function manejarSugerencia(event) {
+  event.preventDefault();
+
+  const payload = {
+    fecha: sugerenciaFechaInput.value,
+    empleada: sugerenciaEmpleadaInput.value,
+    producto: sugerenciaProductoInput.value.trim(),
+    cantidad: Math.floor(leerNumero(sugerenciaCantidadInput.value)),
+    notas: sugerenciaNotasInput.value.trim(),
+  };
+
+  if (!payload.producto) {
+    alert("Escribe el producto que el cliente solicito.");
+    sugerenciaProductoInput.focus();
+    return;
+  }
+
+  if (payload.cantidad <= 0) {
+    alert("La cantidad de veces solicitadas debe ser mayor que cero.");
+    sugerenciaCantidadInput.focus();
+    return;
+  }
+
+  try {
+    if (modoDatos === "compartido") {
+      await addDoc(collection(db, SUGERENCIAS_COLLECTION_NAME), {
+        ...payload,
+        createdAt: serverTimestamp(),
+      });
+    } else {
+      sugerencias.unshift({
+        id: crypto.randomUUID(),
+        ...payload,
+        createdAt: Date.now(),
+      });
+      guardarSugerenciasLocales();
+      refrescarVista();
+    }
+
+    limpiarFormularioSugerencia();
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo guardar la sugerencia.");
+  }
+}
+
+function limpiarFormularioSugerencia() {
+  sugerenciasForm.reset();
+  sugerenciaFechaInput.value = obtenerFechaHoy();
+  sugerenciaCantidadInput.value = 1;
+  sugerenciaProductoInput.focus();
 }
 
 function exportarCsv() {
@@ -714,6 +854,40 @@ function obtenerAnalisisResumen(registrosFiltrados) {
   return { turnos, ventaTotal, ticketsTotales, promedio };
 }
 
+function obtenerResumenSugerencias() {
+  const mapa = new Map();
+  let totalSolicitudes = 0;
+
+  sugerencias.forEach((item) => {
+    totalSolicitudes += item.cantidad;
+    const llave = item.producto.trim().toLowerCase();
+    const actual = mapa.get(llave) || {
+      producto: item.producto,
+      cantidad: 0,
+      ultimaFecha: item.fecha,
+      ultimaEmpleada: item.empleada,
+      notas: item.notas,
+    };
+
+    actual.cantidad += item.cantidad;
+    if (!actual.ultimaFecha || item.fecha >= actual.ultimaFecha) {
+      actual.ultimaFecha = item.fecha;
+      actual.ultimaEmpleada = item.empleada;
+      actual.notas = item.notas || actual.notas;
+    }
+
+    mapa.set(llave, actual);
+  });
+
+  const productos = [...mapa.values()].sort((a, b) => b.cantidad - a.cantidad || a.producto.localeCompare(b.producto));
+
+  return {
+    totalSolicitudes,
+    productos,
+    productoTop: productos[0] ? `${productos[0].producto} (${productos[0].cantidad})` : "",
+  };
+}
+
 function guardarRegistrosLocales() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
 }
@@ -723,10 +897,20 @@ function cargarRegistrosLocales() {
   return datos ? JSON.parse(datos) : [];
 }
 
+function guardarSugerenciasLocales() {
+  localStorage.setItem(STORAGE_SUGERENCIAS_KEY, JSON.stringify(sugerencias));
+}
+
+function cargarSugerenciasLocales() {
+  const datos = localStorage.getItem(STORAGE_SUGERENCIAS_KEY);
+  return datos ? JSON.parse(datos) : [];
+}
+
 function refrescarVista() {
   renderizarRegistros();
   renderizarResumen();
   renderizarAnalisisEmpleadas();
+  renderizarResumenSugerencias();
 }
 
 function mostrarPantallaAcceso() {

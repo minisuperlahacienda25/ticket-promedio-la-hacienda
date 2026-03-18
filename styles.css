@@ -331,6 +331,11 @@ button[type="submit"] {
   margin-bottom: 24px;
 }
 
+.compact-gap {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
 .employee-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -354,6 +359,11 @@ button[type="submit"] {
   font-size: clamp(1.5rem, 3vw, 2.2rem);
   font-weight: 800;
   margin-bottom: 0;
+}
+
+.small-value {
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  line-height: 1.3;
 }
 
 .panel-header {

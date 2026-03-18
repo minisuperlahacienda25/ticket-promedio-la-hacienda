@@ -202,6 +202,92 @@
     <section class="panel">
       <div class="panel-header">
         <div>
+          <h2>Sugerencias de clientes</h2>
+          <p>Registra los productos que mas piden para planear compras semanales.</p>
+        </div>
+      </div>
+
+      <form id="sugerencias-form" class="form-grid">
+        <div class="field">
+          <label for="sugerencia-fecha">Fecha</label>
+          <input id="sugerencia-fecha" name="sugerenciaFecha" type="date" required>
+        </div>
+
+        <div class="field">
+          <label for="sugerencia-empleada">Registro hecho por</label>
+          <select id="sugerencia-empleada" name="sugerenciaEmpleada" required>
+            <option value="NITZIA">NITZIA</option>
+            <option value="PAOLA">PAOLA</option>
+            <option value="VALERIA">VALERIA</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="sugerencia-producto">Producto solicitado</label>
+          <input id="sugerencia-producto" name="sugerenciaProducto" type="text" placeholder="Ej. Coca Cola sin azucar 600 ml" required>
+        </div>
+
+        <div class="field">
+          <label for="sugerencia-cantidad">Cuantas veces lo pidieron</label>
+          <input id="sugerencia-cantidad" name="sugerenciaCantidad" type="number" min="1" step="1" value="1" required>
+        </div>
+
+        <div class="field span-full">
+          <label for="sugerencia-notas">Notas</label>
+          <input id="sugerencia-notas" name="sugerenciaNotas" type="text" placeholder="Marca, tamano o comentario del cliente">
+        </div>
+
+        <div class="actions span-full">
+          <button type="submit">Guardar sugerencia</button>
+          <button type="button" id="limpiar-sugerencia" class="secondary">Limpiar</button>
+        </div>
+      </form>
+
+      <div class="summary-grid compact-gap">
+        <article class="card">
+          <p class="card-label">Sugerencias registradas</p>
+          <p id="total-sugerencias" class="card-value">0</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Productos distintos</p>
+          <p id="productos-distintos" class="card-value">0</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Producto mas pedido</p>
+          <p id="producto-top" class="card-value small-value">Sin datos</p>
+        </article>
+      </div>
+
+      <div class="panel-header">
+        <div>
+          <h2>Resumen de sugerencias</h2>
+          <p>Se agrupan automaticamente por nombre de producto.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Veces solicitado</th>
+              <th>Ultima fecha</th>
+              <th>Ultimo registro</th>
+              <th>Notas recientes</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-sugerencias">
+            <tr class="empty-row">
+              <td colspan="5">Aun no hay sugerencias guardadas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
           <h2>Analisis por empleada</h2>
           <p>Filtra la informacion para revisar cuanto genera cada persona.</p>
         </div>
