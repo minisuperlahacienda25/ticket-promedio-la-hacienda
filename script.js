@@ -85,6 +85,7 @@ const sugerenciaFechaInput = document.getElementById("sugerencia-fecha");
 const sugerenciaEmpleadaInput = document.getElementById("sugerencia-empleada");
 const sugerenciaProductoInput = document.getElementById("sugerencia-producto");
 const sugerenciaCantidadInput = document.getElementById("sugerencia-cantidad");
+const sugerenciaOrigenInput = document.getElementById("sugerencia-origen");
 const sugerenciaNotasInput = document.getElementById("sugerencia-notas");
 const limpiarSugerenciaBtn = document.getElementById("limpiar-sugerencia");
 const cancelarEdicionSugerenciaBtn = document.getElementById("cancelar-edicion-sugerencia");
@@ -472,6 +473,7 @@ function normalizarSugerenciaRemota(item) {
     id: item.id,
     fecha: data.fecha || "",
     empleada: data.empleada || "",
+    origen: data.origen || "NUEVO",
     producto: data.producto || "",
     cantidad: Number(data.cantidad || 0),
     notas: data.notas || "",
@@ -781,6 +783,7 @@ async function manejarSugerencia(event) {
   const payload = {
     fecha: sugerenciaFechaInput.value,
     empleada: sugerenciaEmpleadaInput.value,
+    origen: sugerenciaOrigenInput.value,
     producto: sugerenciaProductoInput.value.trim(),
     cantidad: Math.floor(leerNumero(sugerenciaCantidadInput.value)),
     notas: sugerenciaNotasInput.value.trim(),
@@ -878,6 +881,7 @@ function limpiarFormularioSugerencia() {
   sugerenciasForm.reset();
   sugerenciaFechaInput.value = obtenerFechaHoy();
   sugerenciaCantidadInput.value = 1;
+  sugerenciaOrigenInput.value = "NUEVO";
   cancelarEdicionSugerenciaBtn.classList.add("hidden");
   sugerenciaProductoInput.focus();
 }
@@ -1483,6 +1487,7 @@ function renderizarRegistrosSugerencias() {
       <tr>
         <td>${item.fecha}</td>
         <td>${item.empleada}</td>
+        <td>${item.origen === "FUERA_STOCK" ? "Existente fuera de stock" : "Producto nuevo"}</td>
         <td>${item.producto}</td>
         <td>${item.cantidad}</td>
         <td>${item.notas || "-"}</td>
@@ -1509,6 +1514,7 @@ function iniciarEdicionSugerencia(id) {
   editingSugerenciaId = id;
   sugerenciaFechaInput.value = sugerencia.fecha;
   sugerenciaEmpleadaInput.value = sugerencia.empleada;
+  sugerenciaOrigenInput.value = sugerencia.origen || "NUEVO";
   sugerenciaProductoInput.value = sugerencia.producto;
   sugerenciaCantidadInput.value = sugerencia.cantidad;
   sugerenciaNotasInput.value = sugerencia.notas || "";

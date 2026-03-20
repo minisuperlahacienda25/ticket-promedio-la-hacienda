@@ -279,6 +279,14 @@
           <input id="sugerencia-cantidad" name="sugerenciaCantidad" type="number" min="1" step="1" value="1" required>
         </div>
 
+        <div class="field">
+          <label for="sugerencia-origen">Tipo de sugerencia</label>
+          <select id="sugerencia-origen" name="sugerenciaOrigen" required>
+            <option value="NUEVO">Producto nuevo</option>
+            <option value="FUERA_STOCK">Producto ya existente fuera de stock</option>
+          </select>
+        </div>
+
         <div class="field span-full">
           <label for="sugerencia-notas">Notas</label>
           <input id="sugerencia-notas" name="sugerenciaNotas" type="text" placeholder="Marca, tamano o comentario del cliente">
@@ -362,6 +370,7 @@
             <tr>
               <th>Fecha</th>
               <th>Empleada</th>
+              <th>Tipo</th>
               <th>Producto</th>
               <th>Veces solicitado</th>
               <th>Notas</th>
@@ -370,7 +379,7 @@
           </thead>
           <tbody id="tabla-sugerencias-registros">
             <tr class="empty-row">
-              <td colspan="6">Aun no hay sugerencias individuales guardadas.</td>
+              <td colspan="7">Aun no hay sugerencias individuales guardadas.</td>
             </tr>
           </tbody>
         </table>
