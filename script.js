@@ -1037,7 +1037,28 @@ function generarPdfSugerencias() {
     return;
   }
 
-  const filasHtml = resumen.productos
+  const resumenNuevos = obtenerResumenSugerencias(
+    sugerencias.filter((item) => (item.origen || "NUEVO") === "NUEVO")
+  );
+  const resumenFueraStock = obtenerResumenSugerencias(
+    sugerencias.filter((item) => item.origen === "FUERA_STOCK")
+  );
+
+  const filasNuevos = resumenNuevos.productos
+    .map((item) => {
+      return `
+        <tr>
+          <td>${item.producto}</td>
+          <td>${item.cantidad}</td>
+          <td>${item.ultimaFecha || "-"}</td>
+          <td>${item.ultimaEmpleada || "-"}</td>
+          <td>${item.notas || "-"}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  const filasFueraStock = resumenFueraStock.productos
     .map((item) => {
       return `
         <tr>
@@ -1071,7 +1092,7 @@ function generarPdfSugerencias() {
         .summary { display: grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
         .box { border: 1px solid #d7c3aa; border-radius: 10px; padding: 12px; background: #fbf4ea; }
         .box strong { display: block; margin-bottom: 8px; font-size: 12px; text-transform: uppercase; color: #6f5844; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 24px; }
         th, td { border: 1px solid #e4d3be; padding: 8px; text-align: left; vertical-align: top; }
         th { background: #f3e6d5; }
       </style>
@@ -1089,7 +1110,7 @@ function generarPdfSugerencias() {
         <div class="box"><strong>Productos distintos</strong>${resumen.productos.length}</div>
         <div class="box"><strong>Producto mas pedido</strong>${resumen.productoTop || "Sin datos"}</div>
       </div>
-      <h2>Resumen agrupado de sugerencias</h2>
+      <h2>Productos nuevos</h2>
       <table>
         <thead>
           <tr>
@@ -1100,7 +1121,20 @@ function generarPdfSugerencias() {
             <th>Notas recientes</th>
           </tr>
         </thead>
-        <tbody>${filasHtml}</tbody>
+        <tbody>${filasNuevos || '<tr><td colspan="5">Sin productos nuevos registrados.</td></tr>'}</tbody>
+      </table>
+      <h2>Productos existentes fuera de stock</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Veces solicitado</th>
+            <th>Ultima fecha</th>
+            <th>Ultimo registro</th>
+            <th>Notas recientes</th>
+          </tr>
+        </thead>
+        <tbody>${filasFueraStock || '<tr><td colspan="5">Sin productos fuera de stock registrados.</td></tr>'}</tbody>
       </table>
       <script>window.onload = function () { window.print(); };<\/script>
     </body>
