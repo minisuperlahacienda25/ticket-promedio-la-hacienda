@@ -85,18 +85,14 @@ const sugerenciaFechaInput = document.getElementById("sugerencia-fecha");
 const sugerenciaEmpleadaInput = document.getElementById("sugerencia-empleada");
 const sugerenciaProductoInput = document.getElementById("sugerencia-producto");
 const sugerenciaCantidadInput = document.getElementById("sugerencia-cantidad");
-const sugerenciaTipoInput = document.getElementById("sugerencia-tipo");
 const sugerenciaNotasInput = document.getElementById("sugerencia-notas");
 const limpiarSugerenciaBtn = document.getElementById("limpiar-sugerencia");
 const cancelarEdicionSugerenciaBtn = document.getElementById("cancelar-edicion-sugerencia");
-const tablaSugerenciasNuevas = document.getElementById("tabla-sugerencias-nuevas");
-const tablaSugerenciasRotacion = document.getElementById("tabla-sugerencias-rotacion");
+const tablaSugerencias = document.getElementById("tabla-sugerencias");
 const tablaSugerenciasRegistros = document.getElementById("tabla-sugerencias-registros");
 const totalSugerencias = document.getElementById("total-sugerencias");
 const productosDistintos = document.getElementById("productos-distintos");
 const productoTop = document.getElementById("producto-top");
-const totalSugerenciasNuevas = document.getElementById("total-sugerencias-nuevas");
-const totalSugerenciasRotacion = document.getElementById("total-sugerencias-rotacion");
 const topSugerencias = document.getElementById("top-sugerencias");
 const generarPdfSugerenciasBtn = document.getElementById("generar-pdf-sugerencias");
 const topVentasIds = ["topVenta1", "topVenta2", "topVenta3", "topVenta4", "topVenta5"];
@@ -476,7 +472,6 @@ function normalizarSugerenciaRemota(item) {
     id: item.id,
     fecha: data.fecha || "",
     empleada: data.empleada || "",
-    tipo: data.tipo || "NUEVA",
     producto: data.producto || "",
     cantidad: Number(data.cantidad || 0),
     notas: data.notas || "",
@@ -609,40 +604,16 @@ function renderizarResumenSugerencias() {
   totalSugerencias.textContent = String(resumen.totalSolicitudes);
   productosDistintos.textContent = String(resumen.productos.length);
   productoTop.textContent = resumen.productoTop || "Sin datos";
-  totalSugerenciasNuevas.textContent = String(resumen.totalNuevas);
-  totalSugerenciasRotacion.textContent = String(resumen.totalRotacion);
   renderizarTopSugerencias(resumen.productos);
 
-  if (!resumen.nuevas.length) {
-    tablaSugerenciasNuevas.innerHTML = `
+  if (!resumen.productos.length) {
+    tablaSugerencias.innerHTML = `
       <tr class="empty-row">
-        <td colspan="5">Aun no hay nuevas sugerencias guardadas.</td>
+        <td colspan="5">Aun no hay sugerencias guardadas.</td>
       </tr>
     `;
   } else {
-    tablaSugerenciasNuevas.innerHTML = resumen.nuevas
-      .map((item) => {
-        return `
-          <tr>
-            <td>${item.producto}</td>
-            <td>${item.cantidad}</td>
-            <td>${item.ultimaFecha || "-"}</td>
-            <td>${item.ultimaEmpleada || "-"}</td>
-            <td>${item.notas || "-"}</td>
-          </tr>
-        `;
-      })
-      .join("");
-  }
-
-  if (!resumen.rotacion.length) {
-    tablaSugerenciasRotacion.innerHTML = `
-      <tr class="empty-row">
-        <td colspan="5">Aun no hay productos en rotacion guardados.</td>
-      </tr>
-    `;
-  } else {
-    tablaSugerenciasRotacion.innerHTML = resumen.rotacion
+    tablaSugerencias.innerHTML = resumen.productos
       .map((item) => {
         return `
           <tr>
@@ -810,7 +781,6 @@ async function manejarSugerencia(event) {
   const payload = {
     fecha: sugerenciaFechaInput.value,
     empleada: sugerenciaEmpleadaInput.value,
-    tipo: sugerenciaTipoInput.value,
     producto: sugerenciaProductoInput.value.trim(),
     cantidad: Math.floor(leerNumero(sugerenciaCantidadInput.value)),
     notas: sugerenciaNotasInput.value.trim(),
@@ -908,7 +878,6 @@ function limpiarFormularioSugerencia() {
   sugerenciasForm.reset();
   sugerenciaFechaInput.value = obtenerFechaHoy();
   sugerenciaCantidadInput.value = 1;
-  sugerenciaTipoInput.value = "NUEVA";
   cancelarEdicionSugerenciaBtn.classList.add("hidden");
   sugerenciaProductoInput.focus();
 }
@@ -1055,21 +1024,7 @@ function generarPdfSugerencias() {
     return;
   }
 
-  const filasNuevas = resumen.nuevas
-    .map((item) => {
-      return `
-        <tr>
-          <td>${item.producto}</td>
-          <td>${item.cantidad}</td>
-          <td>${item.ultimaFecha || "-"}</td>
-          <td>${item.ultimaEmpleada || "-"}</td>
-          <td>${item.notas || "-"}</td>
-        </tr>
-      `;
-    })
-    .join("");
-
-  const filasRotacion = resumen.rotacion
+  const filasHtml = resumen.productos
     .map((item) => {
       return `
         <tr>
@@ -1132,20 +1087,7 @@ function generarPdfSugerencias() {
             <th>Notas recientes</th>
           </tr>
         </thead>
-        <tbody>${filasNuevas || '<tr><td colspan="5">Sin nuevas sugerencias.</td></tr>'}</tbody>
-      </table>
-      <h2>Productos en rotacion</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Producto</th>
-            <th>Veces solicitado</th>
-            <th>Ultima fecha</th>
-            <th>Ultimo registro</th>
-            <th>Notas recientes</th>
-          </tr>
-        </thead>
-        <tbody>${filasRotacion || '<tr><td colspan="5">Sin productos en rotacion.</td></tr>'}</tbody>
+        <tbody>${filasHtml}</tbody>
       </table>
       <script>window.onload = function () { window.print(); };<\/script>
     </body>
@@ -1494,20 +1436,12 @@ function obtenerAnalisisResumen(registrosFiltrados) {
 function obtenerResumenSugerencias(lista = sugerencias) {
   const mapa = new Map();
   let totalSolicitudes = 0;
-  let totalNuevas = 0;
-  let totalRotacion = 0;
 
   lista.forEach((item) => {
     totalSolicitudes += item.cantidad;
-    if (item.tipo === "ROTACION") {
-      totalRotacion += item.cantidad;
-    } else {
-      totalNuevas += item.cantidad;
-    }
-    const llave = `${item.tipo || "NUEVA"}::${item.producto.trim().toLowerCase()}`;
+    const llave = item.producto.trim().toLowerCase();
     const actual = mapa.get(llave) || {
       producto: item.producto,
-      tipo: item.tipo || "NUEVA",
       cantidad: 0,
       ultimaFecha: item.fecha,
       ultimaEmpleada: item.empleada,
@@ -1525,16 +1459,10 @@ function obtenerResumenSugerencias(lista = sugerencias) {
   });
 
   const productos = [...mapa.values()].sort((a, b) => b.cantidad - a.cantidad || a.producto.localeCompare(b.producto));
-  const nuevas = productos.filter((item) => item.tipo === "NUEVA");
-  const rotacion = productos.filter((item) => item.tipo === "ROTACION");
 
   return {
     totalSolicitudes,
-    totalNuevas,
-    totalRotacion,
     productos,
-    nuevas,
-    rotacion,
     productoTop: productos[0] ? `${productos[0].producto} (${productos[0].cantidad})` : "",
   };
 }
@@ -1543,7 +1471,7 @@ function renderizarRegistrosSugerencias() {
   if (!sugerencias.length) {
     tablaSugerenciasRegistros.innerHTML = `
       <tr class="empty-row">
-        <td colspan="7">Aun no hay sugerencias individuales guardadas.</td>
+        <td colspan="6">Aun no hay sugerencias individuales guardadas.</td>
       </tr>
     `;
     return;
@@ -1555,7 +1483,6 @@ function renderizarRegistrosSugerencias() {
       <tr>
         <td>${item.fecha}</td>
         <td>${item.empleada}</td>
-        <td>${item.tipo === "ROTACION" ? "Producto en rotacion" : "Nueva sugerencia"}</td>
         <td>${item.producto}</td>
         <td>${item.cantidad}</td>
         <td>${item.notas || "-"}</td>
@@ -1582,7 +1509,6 @@ function iniciarEdicionSugerencia(id) {
   editingSugerenciaId = id;
   sugerenciaFechaInput.value = sugerencia.fecha;
   sugerenciaEmpleadaInput.value = sugerencia.empleada;
-  sugerenciaTipoInput.value = sugerencia.tipo || "NUEVA";
   sugerenciaProductoInput.value = sugerencia.producto;
   sugerenciaCantidadInput.value = sugerencia.cantidad;
   sugerenciaNotasInput.value = sugerencia.notas || "";
