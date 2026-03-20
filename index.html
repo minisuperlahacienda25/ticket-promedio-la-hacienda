@@ -279,6 +279,14 @@
           <input id="sugerencia-cantidad" name="sugerenciaCantidad" type="number" min="1" step="1" value="1" required>
         </div>
 
+        <div class="field">
+          <label for="sugerencia-tipo">Clasificacion</label>
+          <select id="sugerencia-tipo" name="sugerenciaTipo" required>
+            <option value="NUEVA">Nueva sugerencia</option>
+            <option value="ROTACION">Producto en rotacion</option>
+          </select>
+        </div>
+
         <div class="field span-full">
           <label for="sugerencia-notas">Notas</label>
           <input id="sugerencia-notas" name="sugerenciaNotas" type="text" placeholder="Marca, tamano o comentario del cliente">
@@ -286,6 +294,7 @@
 
         <div class="actions span-full">
           <button type="submit">Guardar sugerencia</button>
+          <button type="button" id="cancelar-edicion-sugerencia" class="secondary hidden">Cancelar edicion</button>
           <button type="button" id="limpiar-sugerencia" class="secondary">Limpiar</button>
         </div>
       </form>
@@ -302,6 +311,14 @@
         <article class="card">
           <p class="card-label">Producto mas pedido</p>
           <p id="producto-top" class="card-value small-value">Sin datos</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Nuevas sugerencias</p>
+          <p id="total-sugerencias-nuevas" class="card-value">0</p>
+        </article>
+        <article class="card">
+          <p class="card-label">Productos en rotacion</p>
+          <p id="total-sugerencias-rotacion" class="card-value">0</p>
         </article>
       </div>
 
@@ -322,14 +339,21 @@
       <div class="panel-header">
         <div>
           <h2>Resumen de sugerencias</h2>
-          <p>Se agrupan automaticamente por nombre de producto.</p>
+          <p>Se agrupan automaticamente por nombre de producto y por tipo.</p>
         </div>
         <div class="header-actions">
           <button type="button" id="generar-pdf-sugerencias" class="secondary">Generar PDF sugerencias</button>
         </div>
       </div>
 
-      <div class="table-wrap">
+      <div class="panel-header compact-header">
+        <div>
+          <h2>Nuevas sugerencias</h2>
+          <p>Productos nuevos que los clientes estan empezando a pedir.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap section-gap">
         <table>
           <thead>
             <tr>
@@ -340,9 +364,63 @@
               <th>Notas recientes</th>
             </tr>
           </thead>
-          <tbody id="tabla-sugerencias">
+          <tbody id="tabla-sugerencias-nuevas">
             <tr class="empty-row">
-              <td colspan="5">Aun no hay sugerencias guardadas.</td>
+              <td colspan="5">Aun no hay nuevas sugerencias guardadas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel-header compact-header">
+        <div>
+          <h2>Productos en rotacion</h2>
+          <p>Productos que ya manejan y que siguen teniendo salida.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap section-gap">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Veces solicitado</th>
+              <th>Ultima fecha</th>
+              <th>Ultimo registro</th>
+              <th>Notas recientes</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-sugerencias-rotacion">
+            <tr class="empty-row">
+              <td colspan="5">Aun no hay productos en rotacion guardados.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel-header compact-header">
+        <div>
+          <h2>Registros individuales</h2>
+          <p>Cada sugerencia se puede editar despues de guardarse.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Empleada</th>
+              <th>Tipo</th>
+              <th>Producto</th>
+              <th>Veces solicitado</th>
+              <th>Notas</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-sugerencias-registros">
+            <tr class="empty-row">
+              <td colspan="7">Aun no hay sugerencias individuales guardadas.</td>
             </tr>
           </tbody>
         </table>
