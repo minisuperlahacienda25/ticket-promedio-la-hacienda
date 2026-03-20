@@ -314,47 +314,50 @@
         </article>
       </div>
 
-      <div class="panel-header">
-        <div>
-          <h2>Top 10 productos mas pedidos</h2>
-          <p>Vista rapida para identificar lo que mas solicitan los clientes.</p>
-        </div>
-      </div>
-
-      <div id="top-sugerencias" class="top-sugerencias-grid">
-        <article class="card">
-          <p class="card-label">Sin datos</p>
-          <p class="small-value">Aun no hay sugerencias suficientes.</p>
-        </article>
-      </div>
-
-      <div class="panel-header">
+      <div class="panel-header compact-header">
         <div>
           <h2>Resumen de sugerencias</h2>
-          <p>Se agrupan automaticamente por nombre de producto.</p>
+          <p>Mantenlo oculto para evitar confusiones y abrelo solo cuando quieras revisar el detalle.</p>
         </div>
         <div class="header-actions">
+          <button type="button" id="toggle-resumen-sugerencias" class="secondary">Ver resumen</button>
           <button type="button" id="generar-pdf-sugerencias" class="secondary">Generar PDF sugerencias</button>
         </div>
       </div>
 
-      <div class="table-wrap section-gap">
-        <table>
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Veces solicitado</th>
-              <th>Ultima fecha</th>
-              <th>Ultimo registro</th>
-              <th>Notas recientes</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-sugerencias">
-            <tr class="empty-row">
-              <td colspan="5">Aun no hay sugerencias guardadas.</td>
-            </tr>
-          </tbody>
-        </table>
+      <div id="resumen-sugerencias-box" class="hidden">
+        <div class="panel-header compact-header">
+          <div>
+            <h2>Top 10 productos mas pedidos</h2>
+            <p>Vista rapida para identificar lo que mas solicitan los clientes.</p>
+          </div>
+        </div>
+
+        <div id="top-sugerencias" class="top-sugerencias-grid">
+          <article class="card">
+            <p class="card-label">Sin datos</p>
+            <p class="small-value">Aun no hay sugerencias suficientes.</p>
+          </article>
+        </div>
+
+        <div class="table-wrap section-gap">
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Veces solicitado</th>
+                <th>Ultima fecha</th>
+                <th>Ultimo registro</th>
+                <th>Notas recientes</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-sugerencias">
+              <tr class="empty-row">
+                <td colspan="5">Aun no hay sugerencias guardadas.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="panel-header compact-header">

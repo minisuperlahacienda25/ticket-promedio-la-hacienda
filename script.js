@@ -95,6 +95,8 @@ const totalSugerencias = document.getElementById("total-sugerencias");
 const productosDistintos = document.getElementById("productos-distintos");
 const productoTop = document.getElementById("producto-top");
 const topSugerencias = document.getElementById("top-sugerencias");
+const resumenSugerenciasBox = document.getElementById("resumen-sugerencias-box");
+const toggleResumenSugerenciasBtn = document.getElementById("toggle-resumen-sugerencias");
 const generarPdfSugerenciasBtn = document.getElementById("generar-pdf-sugerencias");
 const topVentasIds = ["topVenta1", "topVenta2", "topVenta3", "topVenta4", "topVenta5"];
 const bajaRotacionIds = ["bajaRotacion1", "bajaRotacion2", "bajaRotacion3"];
@@ -149,6 +151,7 @@ function registrarEventos() {
   sugerenciasForm.addEventListener("submit", manejarSugerencia);
   limpiarSugerenciaBtn.addEventListener("click", limpiarFormularioSugerencia);
   cancelarEdicionSugerenciaBtn.addEventListener("click", cancelarEdicionSugerencia);
+  toggleResumenSugerenciasBtn.addEventListener("click", toggleResumenSugerencias);
   generarPdfSugerenciasBtn.addEventListener("click", generarPdfSugerencias);
   actividadesForm.addEventListener("submit", manejarActividad);
   limpiarActividadBtn.addEventListener("click", limpiarFormularioActividad);
@@ -888,6 +891,12 @@ function limpiarFormularioSugerencia() {
 
 function cancelarEdicionSugerencia() {
   limpiarFormularioSugerencia();
+}
+
+function toggleResumenSugerencias() {
+  const oculto = resumenSugerenciasBox.classList.contains("hidden");
+  resumenSugerenciasBox.classList.toggle("hidden", !oculto);
+  toggleResumenSugerenciasBtn.textContent = oculto ? "Ocultar resumen" : "Ver resumen";
 }
 
 function limpiarFormularioActividad() {

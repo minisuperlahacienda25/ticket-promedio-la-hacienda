@@ -489,6 +489,10 @@ button[type="submit"] {
   margin-bottom: 22px;
 }
 
+#resumen-sugerencias-box {
+  margin-bottom: 18px;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
